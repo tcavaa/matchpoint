@@ -1,0 +1,110 @@
+/* src/components/StartModal.css */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: var(--neutral-white);
+  padding: 30px;
+  border-radius: 8px;
+  border: 4px solid var(--text-dark);
+  box-shadow: 8px 8px 0px var(--text-dark);
+  width: 90%;
+  max-width: 450px;
+}
+
+.modal-content h4 {
+  margin: 0;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  font-size: 1.8em;
+  font-weight: 700;
+  color: var(--text-dark);
+  text-align: center;
+  border-bottom: 3px solid var(--neutral-gray);
+}
+
+.mode-selection label {
+  display: block;
+  margin-bottom: 15px;
+  font-size: 1.1em;
+  font-weight: 500;
+  color: var(--text-dark);
+  cursor: pointer;
+}
+
+.mode-selection input[type="radio"] {
+  margin-right: 10px;
+}
+
+.duration-input {
+  margin-top: 20px;
+}
+
+.duration-input label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 1em;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.duration-input input[type="number"] {
+  font-family: var(--font-family);
+  width: 100%;
+  padding: 10px;
+  font-size: 1em;
+  box-sizing: border-box;
+  border: 3px solid var(--text-dark);
+  border-radius: 4px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 3px solid var(--neutral-gray);
+}
+
+.modal-actions button {
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 1em;
+  padding: 10px 18px;
+  border-radius: 4px;
+  border: 3px solid var(--text-dark);
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+  box-shadow: 4px 4px 0px var(--text-dark);
+}
+
+.modal-actions button:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px var(--text-dark);
+}
+
+.modal-actions button:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px var(--text-dark);
+}
+
+.confirm-start-btn {
+  background-color: var(--accent-yellow);
+  color: var(--text-dark);
+}
+
+.cancel-btn {
+  background-color: var(--neutral-light-gray);
+  color: var(--text-dark);
+}
