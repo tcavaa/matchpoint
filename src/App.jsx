@@ -7,7 +7,7 @@ import SessionHistory from "./components/SessionHistory";
 import { playSound, calculateCost } from "./utils";
 import "./App.css";
 
-const TABLE_COUNT = 8;
+const TABLE_COUNT = 10;
 const HOURLY_RATE = 15; // GEL
 const LOCAL_STORAGE_TABLES_KEY = "pingPongTablesData_v2";
 const LOCAL_STORAGE_HISTORY_KEY = "pingPongSessionHistory_v1";
