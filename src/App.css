@@ -3,7 +3,7 @@
   /* Color Palette from the Image */
   --primary-blue: #4263eb;
   --primary-blue-dark: #364fc7;
-  --primary-blue-active: #1c2a70;
+  --primary-blue-active: #1c2f8b;
   --accent-yellow: #ffdd00;
   --neutral-white: #ffffff;
   --neutral-off-white: #f8f9fa;
@@ -11,9 +11,9 @@
   --text-light: #ffffff;
   --text-dark: #212529;
 
-  --table-ready-bg: #fff5f5; /* Light red background */
-  --table-ready-border: #ff6b6b; /* Alert red */
-  --table-ready-text: #c92a2a; /* Deep red */
+  --table-ready-bg: #fff5f5;
+  --table-ready-border: #ff6b6b;
+  --table-ready-text: #cf4040;
 
   /* Font */
   --font-family: "Poppins", sans-serif;

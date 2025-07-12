@@ -41,6 +41,7 @@
   background-color: var(--primary-blue-dark);
   padding: 10px;
   border-radius: 4px;
+  color: var(--neutral-white);
 }
 
 .cost-display {
@@ -121,27 +122,27 @@
   color: var(--accent-yellow);
 }
 
-/* Card background when countdown is over */
-.table-card.countdown-ended {
-  background-color: #8b0000; /* dark red */
-  border-color: #ffdd00;
-  box-shadow: 8px 8px 0px #ffdd00;
-}
+.timer-ended-indicator {
+  font-size: 2em;
+  font-weight: 700;
+  color: var(--text-light);
+  background-color: var(--table-ready-text);
+  border-radius: 4px;
+  margin-bottom: 15px;
+  padding: 10px;
 
-/* Timer display color change when countdown is over */
-.table-card.countdown-ended .timer-display {
-  background-color: #ff4444;
-  color: #fff;
   animation: pulse 1.5s infinite;
 }
 
-.timer-ended-indicator {
+/* .timer-ended-indicator {
   margin-top: 10px;
   font-weight: 700;
-  color: var(--accent-yellow);
+  color: var(--text-light);
   font-size: 1.2em;
   animation: pulse 1.5s infinite;
-}
+  background-color: var(--table-ready-text);
+  border-radius: 4px;
+} */
 
 @keyframes pulse {
   0% {

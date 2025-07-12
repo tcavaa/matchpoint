@@ -53,6 +53,9 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear }) => {
     (timerMode === "standard" && (elapsedTimeInSeconds > 0 || isRunning)) ||
     (timerMode === "countdown" && initialCountdownSeconds > 0);
 
+  const isCountdownEnded =
+    timerMode === "countdown" && !isRunning && displayTimeSeconds <= 0;
+
   if (!isOn)
     return (
       <div
@@ -88,7 +91,7 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear }) => {
     <div
       className={`table-card ${isRunning ? "running" : ""} ${
         timerMode === "countdown" ? "countdown-mode" : ""
-      }`}
+      } `}
     >
       <div style={{ position: "absolute", top: 10, right: 10 }}>
         <SwitchToggle isOn={isOn} setIsOn={setIsOn} />
@@ -102,7 +105,11 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear }) => {
           ? `Countdown (${formatTime(initialCountdownSeconds || 0)})`
           : "Standard Timer"}
       </div>
-      <div className="timer-display">{formatTime(displayTimeSeconds)}</div>
+      {isCountdownEnded ? (
+        <div className="timer-ended-indicator">Time's Up!</div>
+      ) : (
+        <div className="timer-display">{formatTime(displayTimeSeconds)}</div>
+      )}
       <div className="cost-display">
         {timerMode === "countdown" && initialCountdownSeconds > 0
           ? `Session Cost: ${sessionCost} GEL`
@@ -130,9 +137,6 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear }) => {
           Pay & Clear
         </button>
       </div>
-      {timerMode === "countdown" && isRunning && displayTimeSeconds <= 0 && (
-        <div className="timer-ended-indicator">Time's Up!</div>
-      )}
     </div>
   );
 };
