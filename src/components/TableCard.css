@@ -1,5 +1,6 @@
 /* src/components/TableCard.css */
 .table-card {
+  position: relative;
   background-color: var(--primary-blue);
   color: var(--text-light);
   padding: 20px;
@@ -33,13 +34,14 @@
 }
 
 .timer-display {
-  font-family: 'Roboto Mono', monospace; /* Keep a monospace font for timers */
+  font-family: "Roboto Mono", monospace; /* Keep a monospace font for timers */
   font-size: 2.2em;
   font-weight: 700;
   margin-bottom: 15px;
   background-color: var(--primary-blue-dark);
   padding: 10px;
   border-radius: 4px;
+  color: var(--neutral-white);
 }
 
 .cost-display {
@@ -84,8 +86,8 @@
 }
 
 .stop-btn {
-  background-color: var(--neutral-light-gray);
-  color: var(--text-dark);
+  background-color: var(--table-ready-text);
+  color: var(--text-light);
 }
 
 .pay-clear-btn {
@@ -105,6 +107,11 @@
 /* === State-Specific Styles === */
 .table-card.running {
   box-shadow: 8px 8px 0px var(--accent-yellow);
+  background-color: var(--primary-blue-active);
+}
+
+.table-card.countdown-mode {
+  background-color: var(--primary-blue-active);
 }
 
 .table-card.running:hover {
@@ -116,15 +123,35 @@
 }
 
 .timer-ended-indicator {
-  margin-top: 10px;
+  font-size: 2em;
   font-weight: 700;
-  color: var(--accent-yellow);
-  font-size: 1.2em;
+  color: var(--text-light);
+  background-color: var(--table-ready-text);
+  border-radius: 4px;
+  margin-bottom: 15px;
+  padding: 10px;
+
   animation: pulse 1.5s infinite;
 }
 
+/* .timer-ended-indicator {
+  margin-top: 10px;
+  font-weight: 700;
+  color: var(--text-light);
+  font-size: 1.2em;
+  animation: pulse 1.5s infinite;
+  background-color: var(--table-ready-text);
+  border-radius: 4px;
+} */
+
 @keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
