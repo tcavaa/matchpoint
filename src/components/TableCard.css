@@ -1,5 +1,6 @@
 /* src/components/TableCard.css */
 .table-card {
+  position: relative;
   background-color: var(--primary-blue);
   color: var(--text-light);
   padding: 20px;
@@ -33,7 +34,7 @@
 }
 
 .timer-display {
-  font-family: 'Roboto Mono', monospace; /* Keep a monospace font for timers */
+  font-family: "Roboto Mono", monospace; /* Keep a monospace font for timers */
   font-size: 2.2em;
   font-weight: 700;
   margin-bottom: 15px;
@@ -84,8 +85,8 @@
 }
 
 .stop-btn {
-  background-color: var(--neutral-light-gray);
-  color: var(--text-dark);
+  background-color: var(--table-ready-text);
+  color: var(--text-light);
 }
 
 .pay-clear-btn {
@@ -105,6 +106,11 @@
 /* === State-Specific Styles === */
 .table-card.running {
   box-shadow: 8px 8px 0px var(--accent-yellow);
+  background-color: var(--primary-blue-active);
+}
+
+.table-card.countdown-mode {
+  background-color: var(--primary-blue-active);
 }
 
 .table-card.running:hover {
@@ -113,6 +119,20 @@
 
 .table-card.countdown-mode .timer-display {
   color: var(--accent-yellow);
+}
+
+/* Card background when countdown is over */
+.table-card.countdown-ended {
+  background-color: #8b0000; /* dark red */
+  border-color: #ffdd00;
+  box-shadow: 8px 8px 0px #ffdd00;
+}
+
+/* Timer display color change when countdown is over */
+.table-card.countdown-ended .timer-display {
+  background-color: #ff4444;
+  color: #fff;
+  animation: pulse 1.5s infinite;
 }
 
 .timer-ended-indicator {
@@ -124,7 +144,13 @@
 }
 
 @keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
