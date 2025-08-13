@@ -3,24 +3,22 @@ import React, { useState } from "react";
 import { formatTime, calculateCost } from "../utils";
 import "./TableCard.css"; // Ensure this CSS is updated or styles are fine
 import SwitchToggle from "./SwitchToggle";
+import { HOURLY_RATE } from "../config";
 
-const HOURLY_RATE = 15; // GEL per hour
-
-const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear }) => {
+const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggleAvailability }) => {
   const {
     name,
+    isAvailable,
     timerStartTime,
     elapsedTimeInSeconds,
     isRunning,
     timerMode,
     initialCountdownSeconds,
   } = table;
-
+  
   let displayTimeSeconds = 0;
   let currentCost = "0.00";
   let sessionCost = "0.00"; // Cost for the entire session (especially for countdown)
-
-  const [isOn, setIsOn] = useState(true);
 
   if (timerMode === "countdown") {
     const totalPassedTime =
@@ -56,7 +54,7 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear }) => {
   const isCountdownEnded =
     timerMode === "countdown" && !isRunning && displayTimeSeconds <= 0;
 
-  if (!isOn)
+  if (!isAvailable)
     return (
       <div
         style={{
@@ -82,7 +80,7 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear }) => {
           <div>{name}</div>
         </h3>
         <div style={{ position: "absolute", top: 10, right: 10 }}>
-          <SwitchToggle isOn={isOn} setIsOn={setIsOn} />
+          <SwitchToggle isAvailable={isAvailable} tableId={table.id} handleToggleAvailability={handleToggleAvailability} />
         </div>
       </div>
     );
@@ -94,7 +92,7 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear }) => {
       } `}
     >
       <div style={{ position: "absolute", top: 10, right: 10 }}>
-        <SwitchToggle isOn={isOn} setIsOn={setIsOn} />
+        <SwitchToggle isAvailable={isAvailable} tableId={table.id} handleToggleAvailability={handleToggleAvailability} />
       </div>
       <h3>
         <div>{name}</div>

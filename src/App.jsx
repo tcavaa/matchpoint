@@ -2,17 +2,14 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { v4 as uuidv4 } from "uuid";
 import TableCard from "./components/TableCard";
+import ItemCard from "./components/ItemCard";
+import Cart from "./components/Cart";
 import StartModal from "./components/StartModal";
 import SessionHistory from "./components/SessionHistory";
 import { playSound, calculateCost } from "./utils";
 import "./App.css";
-
-const TABLE_COUNT = 10;
-const HOURLY_RATE = 15; // GEL
-const LOCAL_STORAGE_TABLES_KEY = "pingPongTablesData_v2";
-const LOCAL_STORAGE_HISTORY_KEY = "pingPongSessionHistory_v1";
-const APPS_SCRIPT_WEB_APP_URL =
-  "https://script.google.com/macros/s/AKfycbxEI9gdf7kWAiLMlhxABmGQPosESnD5iI6VCPwLVdD4ICbXs-ToHuucNNj8cSIS0_a7YQ/exec";
+// App.jsx
+import { HOURLY_RATE, TABLE_COUNT, LOCAL_STORAGE_TABLES_KEY, LOCAL_STORAGE_HISTORY_KEY, APPS_SCRIPT_WEB_APP_URL, ITEMS } from './config';
 
 const initializeTables = () => {
   const storedTables = localStorage.getItem(LOCAL_STORAGE_TABLES_KEY);
@@ -22,6 +19,7 @@ const initializeTables = () => {
       return parsedTables.map((table) => ({
         id: table.id || uuidv4(), // Ensure ID exists
         name: table.name || `Table ${table.id || "N/A"}`,
+        isAvailable: table.isAvailable,
         timerStartTime:
           table.isRunning && table.timerStartTime ? table.timerStartTime : null,
         elapsedTimeInSeconds:
@@ -48,6 +46,7 @@ const initializeTables = () => {
     isRunning: false,
     timerMode: "standard",
     initialCountdownSeconds: null,
+    isAvailable: true,
   }));
 };
 
@@ -77,6 +76,17 @@ function App() {
   const [sessionHistory, setSessionHistory] = useState(initializeHistory);
   const [_, setTick] = useState(0); // To force re-render for running timers
   const [showModalForTableId, setShowModalForTableId] = useState(null);
+  const [cart, setCart] = useState  ([]);
+  
+  const handleToggleAvailability = (tableId) => {
+    setTables(prevTables =>
+      prevTables.map(table =>
+        table.id === tableId
+          ? { ...table, isAvailable: !table.isAvailable }
+          : table
+      )
+    );
+  };
 
   // Interval to update running timers and check for countdown completion
   useEffect(() => {
@@ -155,6 +165,104 @@ function App() {
       );
     }
   }, [sessionHistory]);
+
+  const addToCart = (name, price) => {
+    setCart(prev => {
+      const itemExists = prev.find(item => item.name === name);
+      if(itemExists){
+        return prev.map(item => (
+          item.name === name ? {...item, quantity:item.quantity+1} : item
+        ))
+      }else {
+        const newCartItem = {name:name, price:price, quantity: 1}
+        return [newCartItem, ...prev]
+      }
+    })
+  }
+
+  const incrementQuantity = (name) => {
+        setCart(prev =>
+            prev.map(item =>
+                item.name === name
+                    ? { ...item, quantity: item.quantity + 1 }
+                    : item
+            )
+        );
+    };
+
+    const decrementQuantity = (name) => {
+        setCart(prev =>
+            prev.map(item =>
+                item.name === name && item.quantity > 1
+                    ? { ...item, quantity: item.quantity - 1 }
+                    : item
+            )
+        );
+    };
+
+    const removeItem = (name) => {
+        setCart(prev => prev.filter(item => item.name !== name));
+    };
+
+    const calculateTotal = () => {
+        return cart.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
+    };
+
+    // src/App.jsx
+
+  const handleSubmit = () => {
+    // 1. Don't do anything if the cart is empty
+    if (cart.length === 0) {
+      console.log("Cart is empty, nothing to submit.");
+      return;
+    }
+
+    // 2. Prepare the data payload for Google Sheets
+    const total = calculateTotal();
+    const saleData = {
+      type: 'barSale', // This new 'type' field tells our script how to handle the data
+      timestamp: new Date().toISOString(),
+      items: cart.map(item => `${item.name} (x${item.quantity})`).join(', '), // Creates a readable string of items
+      totalAmount: parseFloat(total),
+      id: uuidv4() // A unique ID for this transaction
+    };
+
+    // 3. Check if the Google Sheets URL is configured
+    if (
+      !APPS_SCRIPT_WEB_APP_URL ||
+      APPS_SCRIPT_WEB_APP_URL === "YOUR_COPIED_WEB_APP_URL_HERE"
+    ) {
+      console.warn("Google Sheets Sync: APPS_SCRIPT_WEB_APP_URL is not set. Skipping bar sale sync.");
+    } else {
+      // 4. Send the data using fetch
+      console.log("Google Sheets Sync: Sending bar sale data to Apps Script:", saleData);
+      fetch(APPS_SCRIPT_WEB_APP_URL, {
+          method: "POST",
+          mode: "cors",
+          cache: "no-cache",
+          headers: {
+              "Content-Type": "text/plain",
+          },
+          body: JSON.stringify(saleData),
+      })
+      .then(response => response.json().then(data => ({ ok: response.ok, data })))
+      .then(({ ok, data }) => {
+          if (ok && data.status === "success") {
+              console.log("Google Sheets Sync Success (Bar Sale):", data);
+              playSound("/sound/payment_success.mp3"); // Play sound on success
+          } else {
+              console.error("Google Sheets Sync Error (Bar Sale):", data.message || data);
+              // You could add user-facing error feedback here
+          }
+      })
+      .catch((error) => {
+          console.error("Google Sheets Sync Network Error (Bar Sale):", error);
+      });
+    }
+
+    // 5. Clear the cart locally immediately after submitting
+    setCart([]);
+  };
 
   const openStartModal = useCallback((tableId) => {
     setShowModalForTableId(tableId);
@@ -371,9 +479,27 @@ function App() {
               onOpenStartModal={openStartModal}
               onStop={handleStopTimer}
               onPayAndClear={handlePayAndClear}
+              handleToggleAvailability={handleToggleAvailability}
             />
           ))}
         </div>
+        <div className="menu">
+          {ITEMS.map((item) => (
+           <ItemCard 
+            addToCart={addToCart}
+            key={item.name}
+            item={item}
+          /> 
+          ))}
+        </div>
+        <Cart
+            cart={cart}
+            incrementQuantity={incrementQuantity}
+            decrementQuantity={decrementQuantity}
+            removeItem={removeItem}
+            calculateTotal={calculateTotal}
+            handleSubmit={handleSubmit}
+        />
         <SessionHistory history={sessionHistory} />
       </main>
       {tableForModal && (

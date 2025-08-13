@@ -60,6 +60,13 @@ body {
   margin: 0 auto;
 }
 
+.menu {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+  max-width: 1400px;
+  margin: 50px auto;
+}
+
 .app-footer {
   background-color: var(--text-dark);
   color: var(--neutral-off-white);
