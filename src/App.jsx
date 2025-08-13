@@ -6,6 +6,7 @@ import ItemCard from "./components/ItemCard";
 import Cart from "./components/Cart";
 import StartModal from "./components/StartModal";
 import SessionHistory from "./components/SessionHistory";
+import Analytics from "./components/Analytics";
 import { playSound, calculateCost } from "./utils";
 import "./App.css";
 // App.jsx
@@ -501,6 +502,7 @@ function App() {
             handleSubmit={handleSubmit}
         />
         <SessionHistory history={sessionHistory} />
+        <Analytics />
       </main>
       {tableForModal && (
         <StartModal

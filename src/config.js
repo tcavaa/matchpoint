@@ -37,7 +37,7 @@ export const ITEMS = [
     },
     {
         name: 'Zero',
-        price: 3.0,
+        price: 3.5,
         image: cocaColaZeroImage
     },
     {
