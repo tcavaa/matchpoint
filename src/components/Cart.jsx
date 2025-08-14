@@ -14,7 +14,7 @@ export default function Cart({ cart, incrementQuantity, decrementQuantity, remov
                             <div className="cart-item-details">
                                 <h3>{item.name}</h3>
                                 <p>
-                                    ₾{item.price.toFixed(2)} x {item.quantity} = ${(item.price * item.quantity).toFixed(2)}
+                                    ₾{item.price.toFixed(2)} x {item.quantity} = ₾{(item.price * item.quantity).toFixed(2)}
                                 </p>
                             </div>
                             <div className="cart-item-controls">

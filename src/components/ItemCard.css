@@ -1,14 +1,14 @@
 .item-card {
     font-family: var(--font-family);
     font-weight: 600;
-    font-size: 1em;
+    font-size: 0.8em;
     text-align: center;
-    padding: 12px;
+    padding: 0px 12px;
     border-radius: 4px;
     border: 3px solid var(--text-dark);
     cursor: pointer;
     width: 40px;
-    margin: 8px;
+    margin: 3px;
     background-color: var(--background-light);
     transition: all 0.15s ease-out;
     box-shadow: 4px 4px 0px var(--text-dark);
@@ -31,19 +31,19 @@
 
 .item-image {
     width: 40px;
-    height: 100px;
+    height: 90px;
     object-fit: cover;
     border-radius: 4px;
-    margin-bottom: 8px;
+    margin-bottom: 2px;
 }
 
 .item-card h3 {
-    font-size: 0.7rem;
-    margin: 5px 0;
+    font-size: 0.6rem;
+    margin: 1px 0;
     color: #333;
 }
 
 .item-card p {
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     color: #666;
 }

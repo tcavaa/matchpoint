@@ -1,12 +1,13 @@
 // src/App.jsx
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, lazy, Suspense } from "react";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import TableCard from "./components/TableCard";
 import ItemCard from "./components/ItemCard";
 import Cart from "./components/Cart";
 import StartModal from "./components/StartModal";
 import SessionHistory from "./components/SessionHistory";
-import Analytics from "./components/Analytics";
+import AnalyticsPage from "./pages/AnalyticsPage";
 import { playSound, calculateCost } from "./utils";
 import "./App.css";
 // App.jsx
@@ -78,6 +79,11 @@ function App() {
   const [_, setTick] = useState(0); // To force re-render for running timers
   const [showModalForTableId, setShowModalForTableId] = useState(null);
   const [cart, setCart] = useState  ([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(prev => !prev);
+  };
   
   const handleToggleAvailability = (tableId) => {
     setTables(prevTables =>
@@ -467,55 +473,85 @@ function App() {
   const tableForModal = tables.find((t) => t.id === showModalForTableId);
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>🏓 MatchPoint Table Manager</h1>
-      </header>
-      <main className="main-content">
-        <div className="tables-grid">
-          {tables.map((table) => (
-            <TableCard
-              key={table.id}
-              table={table}
-              onOpenStartModal={openStartModal}
-              onStop={handleStopTimer}
-              onPayAndClear={handlePayAndClear}
-              handleToggleAvailability={handleToggleAvailability}
+    <Router>
+      <div className="app">
+        <header className="app-header">
+          <Link className="logo" to=''><h1>🏓 MatchPoint Table Manager</h1></Link>
+           <button
+            onClick={toggleSidebar}
+            className="sidebar-toggle-btn"
+          >
+            {isSidebarOpen ? "Close Bar" : "Open Bar"}
+          </button>
+        </header>
+        <main className="main-content">
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <>
+                <div className="tables-grid">
+                  {tables.map((table) => (
+                    <TableCard
+                      key={table.id}
+                      table={table}
+                      onOpenStartModal={openStartModal}
+                      onStop={handleStopTimer}
+                      onPayAndClear={handlePayAndClear}
+                      handleToggleAvailability={handleToggleAvailability}
+                    />
+                  ))}
+                </div>
+                {isSidebarOpen && (
+                  <div className="sidebar">
+                    <Cart
+                        cart={cart}
+                        incrementQuantity={incrementQuantity}
+                        decrementQuantity={decrementQuantity}
+                        removeItem={removeItem}
+                        calculateTotal={calculateTotal}
+                        handleSubmit={handleSubmit}
+                    />
+                    <div className="menu">
+                      {ITEMS.map((item) => (
+                      <ItemCard 
+                        addToCart={addToCart}
+                        key={item.name}
+                        item={item}
+                      /> 
+                      ))}
+                    </div>
+                    
+                  </div>
+                )}
+                <SessionHistory history={sessionHistory} />
+                <Link className="analyticsButton" to='analytics'>Analytics Page</Link>
+              </>
+              }
             />
-          ))}
-        </div>
-        <div className="menu">
-          {ITEMS.map((item) => (
-           <ItemCard 
-            addToCart={addToCart}
-            key={item.name}
-            item={item}
-          /> 
-          ))}
-        </div>
-        <Cart
-            cart={cart}
-            incrementQuantity={incrementQuantity}
-            decrementQuantity={decrementQuantity}
-            removeItem={removeItem}
-            calculateTotal={calculateTotal}
-            handleSubmit={handleSubmit}
-        />
-        <SessionHistory history={sessionHistory} />
-        <Analytics />
-      </main>
-      {tableForModal && (
-        <StartModal
-          table={tableForModal}
-          isOpen={!!showModalForTableId}
-          onClose={closeStartModal}
-          onStart={handleStartTimer}
-        />
-      )}
-      <footer className="app-footer">
-        <p>Hourly Rate: {HOURLY_RATE} GEL</p>
-      </footer>
-    </div>
+            <Route
+              path="/analytics"
+              element={
+                <Suspense fallback={<div>Loading Analytics...</div>}>
+                  <AnalyticsPage />
+                </Suspense>
+              }
+            />
+          </Routes>
+        </main>
+        {tableForModal && (
+          <StartModal
+            table={tableForModal}
+            isOpen={!!showModalForTableId}
+            onClose={closeStartModal}
+            onStart={handleStartTimer}
+          />
+        )}
+        <footer className="app-footer">
+          <p>Hourly Rate: {HOURLY_RATE} GEL</p>
+        </footer>
+      </div>
+    </Router>
   );
 }
 
