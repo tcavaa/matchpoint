@@ -1,100 +1,40 @@
 // src/App.jsx
-import React, { useState, useEffect, useCallback, lazy, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
 import TableCard from "./components/TableCard";
-import ItemCard from "./components/ItemCard";
-import Cart from "./components/Cart";
 import StartModal from "./components/StartModal";
 import SessionHistory from "./components/SessionHistory";
 import AnalyticsPage from "./pages/AnalyticsPage";
-import { playSound, calculateCost } from "./utils";
+import Sidebar from "./components/Sidebar";
+import useCart from "./hooks/useCart";
+import useTables from "./hooks/useTables";
+import { playSound } from "./utils/utils";
+import { SOUNDS } from "./utils/constants";
 import "./App.css";
 // App.jsx
-import { HOURLY_RATE, TABLE_COUNT, LOCAL_STORAGE_TABLES_KEY, LOCAL_STORAGE_HISTORY_KEY, APPS_SCRIPT_WEB_APP_URL, ITEMS } from './config';
-
-const initializeTables = () => {
-  const storedTables = localStorage.getItem(LOCAL_STORAGE_TABLES_KEY);
-  if (storedTables) {
-    try {
-      const parsedTables = JSON.parse(storedTables);
-      return parsedTables.map((table) => ({
-        id: table.id || uuidv4(), // Ensure ID exists
-        name: table.name || `Table ${table.id || "N/A"}`,
-        isAvailable: table.isAvailable,
-        timerStartTime:
-          table.isRunning && table.timerStartTime ? table.timerStartTime : null,
-        elapsedTimeInSeconds:
-          typeof table.elapsedTimeInSeconds === "number"
-            ? table.elapsedTimeInSeconds
-            : 0,
-        isRunning:
-          typeof table.isRunning === "boolean" ? table.isRunning : false,
-        timerMode: table.timerMode || "standard",
-        initialCountdownSeconds:
-          typeof table.initialCountdownSeconds === "number"
-            ? table.initialCountdownSeconds
-            : null,
-      }));
-    } catch (e) {
-      console.error("Error parsing stored tables in initializeTables:", e);
-    }
-  }
-  return Array.from({ length: TABLE_COUNT }, (_, i) => ({
-    id: i + 1,
-    name: `Table ${i + 1}`,
-    timerStartTime: null,
-    elapsedTimeInSeconds: 0,
-    isRunning: false,
-    timerMode: "standard",
-    initialCountdownSeconds: null,
-    isAvailable: true,
-  }));
-};
-
-const initializeHistory = () => {
-  const storedHistory = localStorage.getItem(LOCAL_STORAGE_HISTORY_KEY);
-  console.log(
-    "InitializeHistory: Loading from localStorage. Key:",
-    LOCAL_STORAGE_HISTORY_KEY,
-    "Data:",
-    storedHistory
-  );
-  if (storedHistory) {
-    try {
-      const parsedHistory = JSON.parse(storedHistory);
-      console.log("InitializeHistory: Parsed history:", parsedHistory);
-      return parsedHistory;
-    } catch (e) {
-      console.error("InitializeHistory: Error parsing stored history:", e);
-      return [];
-    }
-  }
-  return [];
-};
+import { HOURLY_RATE, LOCAL_STORAGE_TABLES_KEY, LOCAL_STORAGE_HISTORY_KEY } from './config';
 
 function App() {
-  const [tables, setTables] = useState(initializeTables);
-  const [sessionHistory, setSessionHistory] = useState(initializeHistory);
   const [_, setTick] = useState(0); // To force re-render for running timers
-  const [showModalForTableId, setShowModalForTableId] = useState(null);
-  const [cart, setCart] = useState  ([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { cart, addToCart, incrementQuantity, decrementQuantity, removeItem, calculateTotal, handleSubmit } = useCart();
+  const { 
+    tables, 
+    setTables, 
+    sessionHistory, 
+    showModalForTableId,  
+    openStartModal, 
+    closeStartModal, 
+    handleToggleAvailability, 
+    handleStartTimer, 
+    handleStopTimer, 
+    handlePayAndClear 
+  } = useTables();
 
   const toggleSidebar = () => {
     setIsSidebarOpen(prev => !prev);
   };
   
-  const handleToggleAvailability = (tableId) => {
-    setTables(prevTables =>
-      prevTables.map(table =>
-        table.id === tableId
-          ? { ...table, isAvailable: !table.isAvailable }
-          : table
-      )
-    );
-  };
-
   // Interval to update running timers and check for countdown completion
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -115,7 +55,7 @@ function App() {
               table.elapsedTimeInSeconds + elapsedSinceStart;
 
             if (totalPassedTime >= table.initialCountdownSeconds) {
-              playSound("/sound/timer_done.mp3"); // Path from public folder
+              playSound(SOUNDS.TIMER_DONE); // Path from public folder
               console.log(
                 `Table ${table.name} countdown finished automatically.`
               );
@@ -173,303 +113,6 @@ function App() {
     }
   }, [sessionHistory]);
 
-  const addToCart = (name, price) => {
-    setCart(prev => {
-      const itemExists = prev.find(item => item.name === name);
-      if(itemExists){
-        return prev.map(item => (
-          item.name === name ? {...item, quantity:item.quantity+1} : item
-        ))
-      }else {
-        const newCartItem = {name:name, price:price, quantity: 1}
-        return [newCartItem, ...prev]
-      }
-    })
-  }
-
-  const incrementQuantity = (name) => {
-        setCart(prev =>
-            prev.map(item =>
-                item.name === name
-                    ? { ...item, quantity: item.quantity + 1 }
-                    : item
-            )
-        );
-    };
-
-    const decrementQuantity = (name) => {
-        setCart(prev =>
-            prev.map(item =>
-                item.name === name && item.quantity > 1
-                    ? { ...item, quantity: item.quantity - 1 }
-                    : item
-            )
-        );
-    };
-
-    const removeItem = (name) => {
-        setCart(prev => prev.filter(item => item.name !== name));
-    };
-
-    const calculateTotal = () => {
-        return cart.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
-    };
-
-    // src/App.jsx
-
-  const handleSubmit = () => {
-    // 1. Don't do anything if the cart is empty
-    if (cart.length === 0) {
-      console.log("Cart is empty, nothing to submit.");
-      return;
-    }
-
-    // 2. Prepare the data payload for Google Sheets
-    const total = calculateTotal();
-    const saleData = {
-      type: 'barSale', // This new 'type' field tells our script how to handle the data
-      timestamp: new Date().toISOString(),
-      items: cart.map(item => `${item.name} (x${item.quantity})`).join(', '), // Creates a readable string of items
-      totalAmount: parseFloat(total),
-      id: uuidv4() // A unique ID for this transaction
-    };
-
-    // 3. Check if the Google Sheets URL is configured
-    if (
-      !APPS_SCRIPT_WEB_APP_URL ||
-      APPS_SCRIPT_WEB_APP_URL === "YOUR_COPIED_WEB_APP_URL_HERE"
-    ) {
-      console.warn("Google Sheets Sync: APPS_SCRIPT_WEB_APP_URL is not set. Skipping bar sale sync.");
-    } else {
-      // 4. Send the data using fetch
-      console.log("Google Sheets Sync: Sending bar sale data to Apps Script:", saleData);
-      fetch(APPS_SCRIPT_WEB_APP_URL, {
-          method: "POST",
-          mode: "cors",
-          cache: "no-cache",
-          headers: {
-              "Content-Type": "text/plain",
-          },
-          body: JSON.stringify(saleData),
-      })
-      .then(response => response.json().then(data => ({ ok: response.ok, data })))
-      .then(({ ok, data }) => {
-          if (ok && data.status === "success") {
-              console.log("Google Sheets Sync Success (Bar Sale):", data);
-              playSound("/sound/payment_success.mp3"); // Play sound on success
-          } else {
-              console.error("Google Sheets Sync Error (Bar Sale):", data.message || data);
-              // You could add user-facing error feedback here
-          }
-      })
-      .catch((error) => {
-          console.error("Google Sheets Sync Network Error (Bar Sale):", error);
-      });
-    }
-
-    // 5. Clear the cart locally immediately after submitting
-    setCart([]);
-  };
-
-  const openStartModal = useCallback((tableId) => {
-    setShowModalForTableId(tableId);
-  }, []);
-
-  const closeStartModal = useCallback(() => {
-    setShowModalForTableId(null);
-  }, []);
-
-  const handleStartTimer = useCallback(
-    (tableId, mode, durationMinutes) => {
-      setTables((prevTables) =>
-        prevTables.map((table) => {
-          if (table.id === tableId) {
-            if (
-              mode === "countdown" &&
-              durationMinutes &&
-              durationMinutes > 0
-            ) {
-              return {
-                ...table,
-                timerMode: "countdown",
-                initialCountdownSeconds: durationMinutes * 60,
-                elapsedTimeInSeconds: 0, // Reset elapsed for new countdown
-                isRunning: true,
-                timerStartTime: Date.now(),
-              };
-            } else {
-              // Standard mode
-              return {
-                ...table,
-                timerMode: "standard",
-                initialCountdownSeconds: null,
-                // elapsedTimeInSeconds is kept if resuming standard timer (or 0 if new)
-                isRunning: true,
-                timerStartTime: Date.now(),
-              };
-            }
-          }
-          return table;
-        })
-      );
-      closeStartModal();
-    },
-    [closeStartModal]
-  );
-
-  const handleStopTimer = useCallback((tableId) => {
-    setTables((prevTables) =>
-      prevTables.map((table) => {
-        if (table.id === tableId && table.isRunning && table.timerStartTime) {
-          const elapsedSinceLastStart =
-            (Date.now() - table.timerStartTime) / 1000;
-          return {
-            ...table,
-            isRunning: false,
-            elapsedTimeInSeconds:
-              table.elapsedTimeInSeconds + elapsedSinceLastStart,
-            timerStartTime: null,
-          };
-        }
-        return table;
-      })
-    );
-  }, []);
-
-  const handlePayAndClear = useCallback(
-    (tableId) => {
-      console.log(`handlePayAndClear: Called for tableId: ${tableId}`);
-      const tableToClear = tables.find((t) => t.id === tableId);
-
-      if (!tableToClear) {
-        console.error(`handlePayAndClear: Table with id ${tableId} not found.`);
-        return;
-      }
-      // ... (rest of the logic to calculate finalElapsedTimeInSeconds, durationForBilling, amountToPay remains the same) ...
-      let finalElapsedTimeInSeconds = tableToClear.elapsedTimeInSeconds;
-      if (tableToClear.isRunning && tableToClear.timerStartTime) {
-        finalElapsedTimeInSeconds +=
-          (Date.now() - tableToClear.timerStartTime) / 1000;
-      }
-
-      let durationForBilling = 0;
-      const sessionTypeForHistory = tableToClear.timerMode;
-
-      if (tableToClear.timerMode === "countdown") {
-        durationForBilling = tableToClear.initialCountdownSeconds || 0;
-      } else {
-        durationForBilling = finalElapsedTimeInSeconds;
-      }
-
-      const amountToPay = parseFloat(
-        calculateCost(durationForBilling, HOURLY_RATE)
-      );
-
-      const newSessionDetails = {
-        id: uuidv4(),
-        tableId: tableToClear.id,
-        tableName: tableToClear.name,
-        endTime: new Date().toISOString(),
-        durationPlayed: durationForBilling,
-        amountPaid: amountToPay,
-        sessionType: sessionTypeForHistory,
-      };
-      console.log(
-        "handlePayAndClear: Created newSessionDetails:",
-        newSessionDetails
-      );
-
-      // Update local React state for tables
-      setTables((prevTables) =>
-        prevTables.map((table) => {
-          if (table.id === tableId) {
-            playSound("/sound/payment_success.mp3");
-            console.log(`handlePayAndClear: Resetting table: ${table.name}`);
-            return {
-              ...table,
-              timerStartTime: null,
-              elapsedTimeInSeconds: 0,
-              isRunning: false,
-              timerMode: "standard",
-              initialCountdownSeconds: null,
-            };
-          }
-          return table;
-        })
-      );
-
-      // Update local React state for session history (and thus local storage via its useEffect)
-      console.log(
-        "handlePayAndClear: newSessionDetails is valid, attempting to update local sessionHistory."
-      );
-      setSessionHistory((prevHistory) => {
-        const updatedHistory = [...prevHistory, newSessionDetails];
-        console.log(
-          "handlePayAndClear: New local history to be set:",
-          updatedHistory
-        );
-        return updatedHistory;
-      });
-
-      // 👇 --- NEW: Send data to Google Sheets --- 👇
-      if (
-        APPS_SCRIPT_WEB_APP_URL === "YOUR_COPIED_WEB_APP_URL_HERE" ||
-        !APPS_SCRIPT_WEB_APP_URL
-      ) {
-        console.warn(
-          "Google Sheets Sync: APPS_SCRIPT_WEB_APP_URL is not set. Skipping sync."
-        );
-      } else {
-        console.log(
-          "Google Sheets Sync: Sending data to Apps Script:",
-          newSessionDetails
-        );
-        fetch(APPS_SCRIPT_WEB_APP_URL, {
-          method: "POST",
-          mode: "cors", // Keep 'cors' to try and read the response
-          cache: "no-cache",
-          headers: {
-            "Content-Type": "text/plain", // <<< --- CHANGE TO THIS
-          },
-          body: JSON.stringify(newSessionDetails), // Body is still your JSON data as a string
-        })
-          .then((response) => {
-            // Try to parse JSON regardless of ok status to get error message from script
-            return response.json().then((data) => ({
-              ok: response.ok,
-              status: response.status,
-              data,
-            }));
-          })
-          .then(({ ok, status, data }) => {
-            if (ok && data.status === "success") {
-              console.log("Google Sheets Sync Success:", data);
-            } else {
-              console.error(
-                "Google Sheets Sync Error (from script or network):",
-                data
-              );
-              // Log more details if available from the 'data' object from your script
-              if (data && data.message)
-                console.error("Script error message:", data.message);
-            }
-          })
-          .catch((error) => {
-            console.error("Google Sheets Sync Network Error:", error);
-          });
-      }
-      // 👆 --- End of Google Sheets send data --- 👆
-    },
-    [
-      tables,
-      HOURLY_RATE,
-      calculateCost,
-      playSound,
-      setTables,
-      setSessionHistory,
-    ]
-  );
-
   const tableForModal = tables.find((t) => t.id === showModalForTableId);
 
   return (
@@ -503,26 +146,15 @@ function App() {
                   ))}
                 </div>
                 {isSidebarOpen && (
-                  <div className="sidebar">
-                    <Cart
-                        cart={cart}
-                        incrementQuantity={incrementQuantity}
-                        decrementQuantity={decrementQuantity}
-                        removeItem={removeItem}
-                        calculateTotal={calculateTotal}
-                        handleSubmit={handleSubmit}
-                    />
-                    <div className="menu">
-                      {ITEMS.map((item) => (
-                      <ItemCard 
-                        addToCart={addToCart}
-                        key={item.name}
-                        item={item}
-                      /> 
-                      ))}
-                    </div>
-                    
-                  </div>
+                  <Sidebar
+                    cart={cart}
+                    increment={incrementQuantity}
+                    decrement={decrementQuantity}
+                    remove={removeItem}
+                    total={calculateTotal}
+                    submit={handleSubmit}
+                    addToCart={addToCart}
+                  />
                 )}
                 <SessionHistory history={sessionHistory} />
                 <Link className="analyticsButton" to='analytics'>Analytics Page</Link>

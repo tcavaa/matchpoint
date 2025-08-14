@@ -1,6 +1,6 @@
 // src/components/TableCard.jsx
 import React, { useState } from "react";
-import { formatTime, calculateCost } from "../utils";
+import { formatTime, calculateCost } from "../utils/utils";
 import "./TableCard.css"; // Ensure this CSS is updated or styles are fine
 import SwitchToggle from "./SwitchToggle";
 import { HOURLY_RATE } from "../config";

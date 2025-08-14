@@ -1,6 +1,6 @@
 // src/components/SessionHistory.jsx
 import React from 'react';
-import { formatTime } from '../utils';
+import { formatTime } from '../utils/utils';
 import './SessionHistory.css';
 
 const SessionHistory = ({ history }) => {
