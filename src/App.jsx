@@ -5,6 +5,7 @@ import TableCard from "./components/TableCard";
 import StartModal from "./components/StartModal";
 import SessionHistory from "./components/SessionHistory";
 import AnalyticsPage from "./pages/AnalyticsPage";
+import MenuAdminPage from "./pages/MenuAdminPage";
 import Sidebar from "./components/Sidebar";
 import useCart from "./hooks/useCart";
 import useTables from "./hooks/useTables";
@@ -120,12 +121,17 @@ function App() {
       <div className="app">
         <header className="app-header">
           <Link className="logo" to=''><h1>🏓 MatchPoint Table Manager</h1></Link>
-           <button
-            onClick={toggleSidebar}
-            className="sidebar-toggle-btn"
-          >
-            {isSidebarOpen ? "Close Bar" : "Open Bar"}
-          </button>
+          <div className="nav-container">
+            <Link className="nav-link" to='/admin/menu'>Manage Bar</Link>
+            <Link className="nav-link home-link" to='/'>Home</Link>
+            <button
+              onClick={toggleSidebar}
+              className="sidebar-toggle-btn"
+            >
+              
+              {isSidebarOpen ? "Close Bar" : "Open Bar"}
+            </button>
+          </div>
         </header>
         <main className="main-content">
           <Routes>
@@ -169,6 +175,7 @@ function App() {
                 </Suspense>
               }
             />
+            <Route path="/admin/menu" element={<MenuAdminPage />} />
           </Routes>
         </main>
         {tableForModal && (
