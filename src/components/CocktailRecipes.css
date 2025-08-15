@@ -1,0 +1,96 @@
+.cocktail-container {
+  text-align: center;
+  padding: 20px;
+  margin: 35px auto;
+}
+
+.cocktail-title {
+  font-size: 2rem;
+  color: var(--primary-blue-dark);
+  margin-bottom: 20px;
+  animation: bounce 1.5s infinite alternate;
+}
+
+.cocktail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.cocktail-card {
+  background-color: var(--primary-blue);
+  color: var(--neutral-white);
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 4px 4px 0px var(--primary-blue-dark);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.cocktail-card:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 6px 6px 0px var(--primary-blue-dark);
+}
+
+.cocktail-glass {
+  position: relative;
+  margin: 15px auto;
+  width: 100px;
+  height: 140px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 0 0 50px 50px;
+  overflow: hidden;
+  border: 2px solid var(--neutral-white);
+}
+
+.ingredient-layer {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 0.7rem;
+  line-height: 35px;
+  color: var(--text-dark);
+  font-weight: bold;
+  transform: translateY(150%);
+  opacity: 0;
+  animation: pourIn 0.5s forwards;
+}
+
+.cocktail-card.hovered .ingredient-layer {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.cocktail-fun {
+  font-style: italic;
+  color: var(--accent-yellow);
+  margin-top: 10px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.cocktail-card.hovered .cocktail-fun {
+  opacity: 1;
+}
+
+@keyframes pourIn {
+  from { transform: translateY(150%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes shake {
+  0% { transform: translateX(-50%) rotate(0deg); }
+  25% { transform: translateX(-50%) rotate(8deg); }
+  50% { transform: translateX(-50%) rotate(-8deg); }
+  75% { transform: translateX(-50%) rotate(6deg); }
+  100% { transform: translateX(-50%) rotate(0deg); }
+}
+
+@keyframes bounce {
+  from { transform: translateY(0px); }
+  to { transform: translateY(-5px); }
+}

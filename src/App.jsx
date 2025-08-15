@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import TableCard from "./components/TableCard";
 import StartModal from "./components/StartModal";
 import SessionHistory from "./components/SessionHistory";
+import CocktailRecipes from "./components/CocktailRecipes";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import MenuAdminPage from "./pages/MenuAdminPage";
 import Sidebar from "./components/Sidebar";
@@ -163,6 +164,7 @@ function App() {
                   />
                 )}
                 <SessionHistory history={sessionHistory} />
+                <CocktailRecipes/>
                 <Link className="analyticsButton" to='analytics'>Analytics Page</Link>
               </>
               }
