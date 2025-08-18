@@ -4,7 +4,7 @@ import Cart from "./Cart";
 import ItemCard from "./ItemCard";
 import { API_URL } from "../config";
 
-export default function Sidebar({ cart, increment, decrement, remove, total, submit, addToCart }) {
+export default function Sidebar({ cart, increment, decrement, remove, total, submit, addToCart, toggleSidebar }) {
   const [menuItems, setMenuItems] = useState([]);
   const [error, setError] = useState(null);
 
@@ -28,6 +28,7 @@ export default function Sidebar({ cart, increment, decrement, remove, total, sub
 
   return (
     <div className="sidebar">
+      <button className="closeButton" onClick={toggleSidebar}>X</button>
       <Cart
         cart={cart}
         incrementQuantity={increment}

@@ -161,6 +161,7 @@ function App() {
                     total={calculateTotal}
                     submit={handleSubmit}
                     addToCart={addToCart}
+                    toggleSidebar={toggleSidebar}
                   />
                 )}
                 <SessionHistory history={sessionHistory} />
