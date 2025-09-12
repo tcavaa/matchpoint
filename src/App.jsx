@@ -173,7 +173,7 @@ function App() {
             <Route
               path="/analytics"
               element={
-                <Suspense fallback={<div>Loading Analytics...</div>}>
+                <Suspense fallback={<div>Loading Analytics..</div>}>
                   <AnalyticsPage />
                 </Suspense>
               }
