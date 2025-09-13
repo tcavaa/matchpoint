@@ -1,6 +1,7 @@
 // src/pages/MenuAdminPage.jsx
 import React, { useState, useEffect } from 'react';
 import { API_URL } from '../config';
+import { applyOrder, setMenuOrder, removeFromOrder } from '../utils/menuOrder';
 import './MenuAdminPage.css'; // We'll create this CSS file next
 
 export default function MenuAdminPage() {
@@ -18,7 +19,7 @@ export default function MenuAdminPage() {
     try {
       const response = await fetch(API_URL);
       const data = await response.json();
-      setItems(data);
+      setItems(applyOrder(data));
     } catch (error) {
       console.error('Error fetching menu items:', error);
     }
@@ -87,11 +88,40 @@ export default function MenuAdminPage() {
     if (window.confirm('Are you sure you want to delete this item?')) {
       try {
         await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+        removeFromOrder(id);
         fetchItems(); // Refresh the list
       } catch (error) {
         console.error('Error deleting item:', error);
       }
     }
+  };
+
+  // Drag-and-drop handlers for manual ordering
+  const handleDragStart = (e, id) => {
+    e.dataTransfer.setData('text/plain', String(id));
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e, targetId) => {
+    e.preventDefault();
+    const sourceIdRaw = e.dataTransfer.getData('text/plain');
+    if (!sourceIdRaw) return;
+    const sourceId = Number(sourceIdRaw);
+    if (sourceId === targetId) return;
+
+    const current = [...items];
+    const sourceIndex = current.findIndex(i => i.id === sourceId);
+    const targetIndex = current.findIndex(i => i.id === targetId);
+    if (sourceIndex === -1 || targetIndex === -1) return;
+
+    const updated = [...current];
+    const [moved] = updated.splice(sourceIndex, 1);
+    updated.splice(targetIndex, 0, moved);
+    setItems(updated);
+    setMenuOrder(updated.map(i => i.id));
   };
 
   return (
@@ -136,7 +166,15 @@ export default function MenuAdminPage() {
       <div className="items-list">
         <h2>Current Menu</h2>
         {items.map((item) => (
-          <div key={item.id} className="item-row">
+          <div
+            key={item.id}
+            className="item-row"
+            draggable
+            onDragStart={(e) => handleDragStart(e, item.id)}
+            onDragOver={handleDragOver}
+            onDrop={(e) => handleDrop(e, item.id)}
+            title="Drag to reorder"
+          >
             <img src={item.image} alt={item.name} className="item-thumbnail" />
             <span className="item-name">{item.name}</span>
             <span className="item-price">₾{item.price}</span>

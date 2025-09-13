@@ -52,7 +52,11 @@ export default function Analytics() {
   });
 
   const dayLabels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-  const workingHours = [...Array.from({ length: 6 }, (_, i) => `${i + 18}:00`), "0:00"];
+  // Display analytics from 12:00 (noon) to 24:00 (0:00)
+  const workingHours = [
+    ...Array.from({ length: 12 }, (_, i) => `${i + 12}:00`), // 12:00–23:00
+    "0:00", // 24:00 → 0:00
+  ];
 
   return (
     <div style={{ padding: "20px" }}>
@@ -78,15 +82,15 @@ export default function Analytics() {
           ],
         };
 
-        // Hour of Day Usage (18:00–23:00 + 0:00–1:00)
+        // Hour of Day Usage (12:00–23:00 + 0:00)
         const hourCounts = Array(24).fill(0);
         rows.forEach((row) => {
           hourCounts[row.endDate.getHours()] += row.rawSeconds;
         });
 
         const workingHourCounts = [
-          ...hourCounts.slice(18, 24), // 18:00–23:00
-          ...hourCounts.slice(0, 2)    // 0:00–1:00
+          ...hourCounts.slice(12, 24), // 12:00–23:00
+          ...hourCounts.slice(0, 1),   // 0:00
         ];
 
         const hourUsageData = {

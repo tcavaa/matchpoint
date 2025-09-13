@@ -3,6 +3,7 @@ import "./Sidebar.css";
 import Cart from "./Cart";
 import ItemCard from "./ItemCard";
 import { API_URL } from "../config";
+import { applyOrder } from "../utils/menuOrder";
 
 export default function Sidebar({ cart, increment, decrement, remove, total, submit, addToCart, toggleSidebar }) {
   const [menuItems, setMenuItems] = useState([]);
@@ -16,7 +17,7 @@ export default function Sidebar({ cart, increment, decrement, remove, total, sub
           throw new Error('Network response was not ok');
         }
         const data = await response.json();
-        setMenuItems(data);
+        setMenuItems(applyOrder(data));
       } catch (err) {
         console.error("Failed to fetch menu items:", err);
         setError("Could not load menu items. Is the backend server running?");
