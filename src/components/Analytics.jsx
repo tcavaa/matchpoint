@@ -10,6 +10,7 @@ import {
   LinearScale,
 } from "chart.js";
 import { APPS_SCRIPT_WEB_APP_URL } from "../config";
+import { parseFlexibleDate } from "../utils/utils";
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
 
@@ -36,12 +37,17 @@ export default function Analytics() {
   if (!data.length) return <p>No data found for analytics.</p>;
 
   // Parse data with Date objects and numeric fields
-  const parsedData = data.map((row) => ({
-    ...row,
-    endDate: new Date(row["End Time"]),
-    rawSeconds: Number(row["Raw Duration"] || 0),
-    amountPaid: Number(row["Amount Paid"] || 0),
-  }));
+  const parsedData = data
+    .map((row) => {
+      const endDate = parseFlexibleDate(row["End Time"]);
+      return {
+        ...row,
+        endDate,
+        rawSeconds: Number(row["Raw Duration"] || 0),
+        amountPaid: Number(row["Amount Paid"] || 0),
+      };
+    })
+    .filter((row) => row.endDate instanceof Date && !isNaN(row.endDate.getTime()));
 
   // Group data by month-year
   const monthlyData = {};

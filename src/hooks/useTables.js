@@ -178,6 +178,74 @@ export default function useTables() {
     ]
   );
 
+  const handleTransferTimer = useCallback((fromTableId, toTableId) => {
+    if (fromTableId === toTableId) return;
+
+    setTables((prevTables) => {
+      const fromTable = prevTables.find((t) => t.id === fromTableId);
+      const toTable = prevTables.find((t) => t.id === toTableId);
+      if (!fromTable || !toTable) return prevTables;
+
+      // Calculate total elapsed on source (including running segment)
+      let totalElapsedOnSource = fromTable.elapsedTimeInSeconds || 0;
+      if (fromTable.isRunning && fromTable.timerStartTime) {
+        totalElapsedOnSource += (Date.now() - fromTable.timerStartTime) / 1000;
+      }
+
+      return prevTables.map((table) => {
+        if (table.id === fromTableId) {
+          // Reset source table
+          return {
+            ...table,
+            timerStartTime: null,
+            elapsedTimeInSeconds: 0,
+            isRunning: false,
+            timerMode: "standard",
+            initialCountdownSeconds: null,
+          };
+        }
+        if (table.id === toTableId) {
+          // Start on destination based on source mode
+          if (fromTable.timerMode === "countdown") {
+            const initial = fromTable.initialCountdownSeconds || 0;
+            const remaining = Math.max(0, initial - totalElapsedOnSource);
+            if (remaining <= 0) {
+              // Countdown finished on transfer; reflect finished state
+              return {
+                ...table,
+                timerMode: "countdown",
+                initialCountdownSeconds: initial,
+                elapsedTimeInSeconds: initial,
+                isRunning: false,
+                timerStartTime: null,
+              };
+            }
+            // Preserve original purchased countdown for cost display
+            // Continue with accumulated elapsed time so remaining stays correct
+            return {
+              ...table,
+              timerMode: "countdown",
+              initialCountdownSeconds: initial,
+              elapsedTimeInSeconds: totalElapsedOnSource,
+              isRunning: true,
+              timerStartTime: Date.now(),
+            };
+          }
+          // Standard timer: continue from accumulated elapsed
+          return {
+            ...table,
+            timerMode: "standard",
+            initialCountdownSeconds: null,
+            elapsedTimeInSeconds: totalElapsedOnSource,
+            isRunning: true,
+            timerStartTime: Date.now(),
+          };
+        }
+        return table;
+      });
+    });
+  }, []);
+
   return {
     tables, 
     setTables, 
@@ -188,7 +256,8 @@ export default function useTables() {
     handleToggleAvailability, 
     handleStartTimer, 
     handleStopTimer, 
-    handlePayAndClear 
+    handlePayAndClear, 
+    handleTransferTimer
   };
 
 }

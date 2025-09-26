@@ -5,7 +5,7 @@ import "./TableCard.css"; // Ensure this CSS is updated or styles are fine
 import SwitchToggle from "./SwitchToggle";
 import { HOURLY_RATE } from "../config";
 
-const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggleAvailability }) => {
+const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggleAvailability, onTransferTimer }) => {
   const {
     name,
     isAvailable,
@@ -85,11 +85,38 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
       </div>
     );
 
+  const handleDragStart = (e) => {
+    // mark source table id
+    e.dataTransfer.setData("text/plain", String(table.id));
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const fromIdStr = e.dataTransfer.getData("text/plain");
+    const fromId = parseInt(fromIdStr, 10);
+    if (!Number.isFinite(fromId)) return;
+    if (fromId === table.id) return;
+    if (typeof onTransferTimer === 'function') {
+      onTransferTimer(fromId, table.id);
+    }
+  };
+
   return (
     <div
       className={`table-card ${isRunning ? "running" : ""} ${
         timerMode === "countdown" ? "countdown-mode" : ""
       } `}
+      draggable={isRunning || elapsedTimeInSeconds > 0 || (timerMode === 'countdown' && initialCountdownSeconds > 0)}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+      title="Drag to another table to transfer the timer"
     >
       <div style={{ position: "absolute", top: 10, right: 10 }}>
         <SwitchToggle isAvailable={isAvailable} tableId={table.id} handleToggleAvailability={handleToggleAvailability} />

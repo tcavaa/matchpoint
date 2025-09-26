@@ -30,7 +30,8 @@ function App() {
     handleToggleAvailability, 
     handleStartTimer, 
     handleStopTimer, 
-    handlePayAndClear 
+    handlePayAndClear, 
+    handleTransferTimer
   } = useTables();
 
   const toggleSidebar = () => {
@@ -149,6 +150,7 @@ function App() {
                       onStop={handleStopTimer}
                       onPayAndClear={handlePayAndClear}
                       handleToggleAvailability={handleToggleAvailability}
+                      onTransferTimer={handleTransferTimer}
                     />
                   ))}
                 </div>
