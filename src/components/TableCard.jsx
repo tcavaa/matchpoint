@@ -1,9 +1,9 @@
 // src/components/TableCard.jsx
 import React, { useState } from "react";
-import { formatTime, calculateCost } from "../utils/utils";
+import { formatTime, calculateCost, calculateSegmentedPrice } from "../utils/utils";
 import "./TableCard.css"; // Ensure this CSS is updated or styles are fine
 import SwitchToggle from "./SwitchToggle";
-import { HOURLY_RATE } from "../config";
+import { HOURLY_RATE, LOCAL_STORAGE_SALES_SETTINGS_KEY } from "../config";
 
 const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggleAvailability, onTransferTimer }) => {
   const {
@@ -14,11 +14,20 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
     isRunning,
     timerMode,
     initialCountdownSeconds,
+    sessionStartTime,
+    fitPass,
   } = table;
   
   let displayTimeSeconds = 0;
   let currentCost = "0.00";
   let sessionCost = "0.00"; // Cost for the entire session (especially for countdown)
+
+  // Load sales settings with defaults
+  let sales = { saleFromHour: 12, saleToHour: 15, saleHourlyRate: 12 };
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_SALES_SETTINGS_KEY);
+    if (raw) sales = { ...sales, ...JSON.parse(raw) };
+  } catch {}
 
   if (timerMode === "countdown") {
     const totalPassedTime =
@@ -28,7 +37,21 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
     displayTimeSeconds = initialCountdownSeconds
       ? initialCountdownSeconds - totalPassedTime
       : 0;
-    sessionCost = calculateCost(initialCountdownSeconds || 0, HOURLY_RATE);
+    if (fitPass) {
+      const ratePerSecond = 6 / (30 * 60);
+      sessionCost = ((initialCountdownSeconds || 0) * ratePerSecond).toFixed(2);
+    } else {
+      const startMs = sessionStartTime || Date.now();
+      const endMs = (sessionStartTime || Date.now()) + (initialCountdownSeconds || 0) * 1000;
+      sessionCost = calculateSegmentedPrice({
+        startTimeMs: startMs,
+        endTimeMs: endMs,
+        hourlyRate: HOURLY_RATE,
+        saleFromHour: sales.saleFromHour,
+        saleToHour: sales.saleToHour,
+        saleHourlyRate: sales.saleHourlyRate,
+      });
+    }
     currentCost = sessionCost; // For countdown, cost is fixed
     if (isRunning && displayTimeSeconds < 0) displayTimeSeconds = 0; // Don't show negative time
   } else {
@@ -37,7 +60,21 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
       isRunning && timerStartTime
         ? elapsedTimeInSeconds + (Date.now() - timerStartTime) / 1000
         : elapsedTimeInSeconds;
-    currentCost = calculateCost(displayTimeSeconds, HOURLY_RATE);
+    if (fitPass) {
+      const ratePerSecond = 6 / (30 * 60);
+      currentCost = (displayTimeSeconds * ratePerSecond).toFixed(2);
+    } else {
+      const startMs = sessionStartTime || Date.now() - displayTimeSeconds * 1000;
+      const endMs = isRunning ? Date.now() : startMs + displayTimeSeconds * 1000;
+      currentCost = calculateSegmentedPrice({
+        startTimeMs: startMs,
+        endTimeMs: endMs,
+        hourlyRate: HOURLY_RATE,
+        saleFromHour: sales.saleFromHour,
+        saleToHour: sales.saleToHour,
+        saleHourlyRate: sales.saleHourlyRate,
+      });
+    }
     sessionCost = currentCost;
   }
 

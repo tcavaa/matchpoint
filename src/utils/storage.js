@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { TABLE_COUNT, LOCAL_STORAGE_TABLES_KEY, LOCAL_STORAGE_HISTORY_KEY } from "../config";
+import { TABLE_COUNT, LOCAL_STORAGE_TABLES_KEY, LOCAL_STORAGE_HISTORY_KEY, LOCAL_STORAGE_SALES_SETTINGS_KEY } from "../config";
 import { TIMER_MODES } from "./constants";
 
 export function initializeTables() {
@@ -24,6 +24,10 @@ export function initializeTables() {
             typeof table.initialCountdownSeconds === "number"
               ? table.initialCountdownSeconds
               : null,
+          // new fields for pricing logic
+          sessionStartTime:
+            typeof table.sessionStartTime === "number" ? table.sessionStartTime : null,
+          fitPass: typeof table.fitPass === "boolean" ? table.fitPass : false,
         }));
       } catch (e) {
         console.error("Error parsing stored tables in initializeTables:", e);
@@ -38,6 +42,8 @@ export function initializeTables() {
       timerMode: "standard",
       initialCountdownSeconds: null,
       isAvailable: true,
+      sessionStartTime: null,
+      fitPass: false,
     }));
 }
 
@@ -80,4 +86,23 @@ export function initializeHistory() {
       }
     }
     return [];
+}
+
+export function initializeSalesSettings() {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_SALES_SETTINGS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (
+        typeof parsed.saleFromHour === "number" &&
+        typeof parsed.saleToHour === "number" &&
+        typeof parsed.saleHourlyRate === "number"
+      ) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.error("Error parsing sales settings:", e);
+  }
+  return { saleFromHour: 12, saleToHour: 15, saleHourlyRate: 12 };
 }

@@ -5,6 +5,7 @@ import "./StartModal.css";
 const StartModal = ({ table, isOpen, onClose, onStart }) => {
   const [mode, setMode] = useState("countdown"); // 'standard' or 'countdown'
   const [durationMinutes, setDurationMinutes] = useState(60);
+  const [fitPass, setFitPass] = useState(false);
 
   if (!isOpen) return null;
 
@@ -12,7 +13,8 @@ const StartModal = ({ table, isOpen, onClose, onStart }) => {
     onStart(
       table.id,
       mode,
-      mode === "countdown" ? parseInt(durationMinutes, 10) : null
+      mode === "countdown" ? parseInt(durationMinutes, 10) : null,
+      { fitPass }
     );
     onClose();
   };
@@ -56,6 +58,17 @@ const StartModal = ({ table, isOpen, onClose, onStart }) => {
             />
           </div>
         )}
+
+        <div style={{ marginTop: 12 }}>
+          <label>
+            <input
+              type="checkbox"
+              checked={fitPass}
+              onChange={(e) => setFitPass(e.target.checked)}
+            />
+            &nbsp;FitPass (30 minutes = 6 GEL)
+          </label>
+        </div>
 
         <div className="modal-actions">
           <button onClick={handleStart} className="confirm-start-btn">

@@ -6,6 +6,7 @@ import StartModal from "./components/StartModal";
 import SessionHistory from "./components/SessionHistory";
 import CocktailRecipes from "./components/CocktailRecipes";
 import AnalyticsPage from "./pages/AnalyticsPage";
+import SalesSettingsPage from "./pages/SalesSettingsPage";
 import MenuAdminPage from "./pages/MenuAdminPage";
 import Sidebar from "./components/Sidebar";
 import useCart from "./hooks/useCart";
@@ -125,6 +126,7 @@ function App() {
           <Link className="logo" to=''><h1>🏓 MatchPoint Table Manager</h1></Link>
           <div className="nav-container">
             <Link className="nav-link" to='/admin/menu'>Manage Bar</Link>
+            <Link className="nav-link" to='/admin/sales'>Sale Settings</Link>
             <Link className="nav-link home-link" to='/'>Home</Link>
             <button
               onClick={toggleSidebar}
@@ -180,6 +182,7 @@ function App() {
                 </Suspense>
               }
             />
+            <Route path="/admin/sales" element={<SalesSettingsPage />} />
             <Route path="/admin/menu" element={<MenuAdminPage />} />
           </Routes>
         </main>

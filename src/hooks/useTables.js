@@ -1,10 +1,10 @@
 import { useState, useCallback } from "react";
-import { playSound, calculateCost } from "../utils/utils";
+import { playSound, calculateCost, calculateSegmentedPrice } from "../utils/utils";
 import { v4 as uuidv4 } from "uuid";
 import { SOUNDS } from "../utils/constants";
 import { initializeTables, initializeHistory } from "../utils/storage";
 import { sendToGoogleSheets } from "../services/googleSheets";
-import { HOURLY_RATE } from '../config';
+import { HOURLY_RATE, LOCAL_STORAGE_SALES_SETTINGS_KEY } from '../config';
 
 export default function useTables() {
     const [tables, setTables] = useState(initializeTables);
@@ -30,7 +30,7 @@ export default function useTables() {
       };
 
       const handleStartTimer = useCallback(
-    (tableId, mode, durationMinutes) => {
+    (tableId, mode, durationMinutes, options = {}) => {
       setTables((prevTables) =>
         prevTables.map((table) => {
           if (table.id === tableId) {
@@ -46,6 +46,8 @@ export default function useTables() {
                 elapsedTimeInSeconds: 0, // Reset elapsed for new countdown
                 isRunning: true,
                 timerStartTime: Date.now(),
+                sessionStartTime: Date.now(),
+                fitPass: !!options.fitPass,
               };
             } else {
               // Standard mode
@@ -56,6 +58,8 @@ export default function useTables() {
                 // elapsedTimeInSeconds is kept if resuming standard timer (or 0 if new)
                 isRunning: true,
                 timerStartTime: Date.now(),
+                sessionStartTime: Date.now(),
+                fitPass: !!options.fitPass,
               };
             }
           }
@@ -111,9 +115,40 @@ export default function useTables() {
         durationForBilling = finalElapsedTimeInSeconds;
       }
 
-      const amountToPay = parseFloat(
-        calculateCost(durationForBilling, HOURLY_RATE)
-      );
+      // Load sales config
+      let sales = { saleFromHour: 12, saleToHour: 15, saleHourlyRate: 12 };
+      try {
+        const raw = localStorage.getItem(LOCAL_STORAGE_SALES_SETTINGS_KEY);
+        if (raw) sales = { ...sales, ...JSON.parse(raw) };
+      } catch {}
+
+      // Determine start and end times for pricing
+      const nowMs = Date.now();
+      const startTimeMs = tableToClear.sessionStartTime || nowMs - finalElapsedTimeInSeconds * 1000;
+      const purchasedEndMsForCountdown = startTimeMs + (tableToClear.initialCountdownSeconds || 0) * 1000;
+      const endTimeMsForBilling = tableToClear.timerMode === 'countdown' ? purchasedEndMsForCountdown : nowMs;
+
+      let amountToPay = 0;
+      if (tableToClear.fitPass) {
+        // FitPass: 30 minutes = 6 GEL, prorated. For countdown, use purchased duration;
+        // for standard, use final elapsed.
+        const seconds = tableToClear.timerMode === 'countdown' ? (tableToClear.initialCountdownSeconds || 0) : finalElapsedTimeInSeconds;
+        const ratePerSecond = 6 / (30 * 60);
+        amountToPay = seconds * ratePerSecond;
+      } else {
+        // Segmented pricing across sale window using wall clock time
+        amountToPay = parseFloat(
+          calculateSegmentedPrice({
+            startTimeMs,
+            endTimeMs: endTimeMsForBilling,
+            hourlyRate: HOURLY_RATE,
+            saleFromHour: sales.saleFromHour,
+            saleToHour: sales.saleToHour,
+            saleHourlyRate: sales.saleHourlyRate,
+            timezoneOffsetMinutes: 240,
+          })
+        );
+      }
 
       const newSessionDetails = {
         id: uuidv4(),
@@ -202,6 +237,8 @@ export default function useTables() {
             isRunning: false,
             timerMode: "standard",
             initialCountdownSeconds: null,
+              sessionStartTime: null,
+              fitPass: false,
           };
         }
         if (table.id === toTableId) {
@@ -229,6 +266,9 @@ export default function useTables() {
               elapsedTimeInSeconds: totalElapsedOnSource,
               isRunning: true,
               timerStartTime: Date.now(),
+              // carry over pricing flags
+              sessionStartTime: fromTable.sessionStartTime ?? Date.now(),
+              fitPass: !!fromTable.fitPass,
             };
           }
           // Standard timer: continue from accumulated elapsed
@@ -239,6 +279,8 @@ export default function useTables() {
             elapsedTimeInSeconds: totalElapsedOnSource,
             isRunning: true,
             timerStartTime: Date.now(),
+            sessionStartTime: fromTable.sessionStartTime ?? Date.now(),
+            fitPass: !!fromTable.fitPass,
           };
         }
         return table;

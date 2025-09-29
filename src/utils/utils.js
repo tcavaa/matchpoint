@@ -33,6 +33,54 @@ export const calculateCost = (totalSeconds, hourlyRate) => {
 };
 
 /**
+ * Calculate segmented price across sale window.
+ * Sale window: fromHour (inclusive) toHour (exclusive) in 24h (0-24).
+ * Example: 12-15 at 12 GEL/hr; otherwise HOURLY_RATE.
+ * If session crosses boundaries, split time accordingly.
+ */
+export const calculateSegmentedPrice = ({
+  startTimeMs,
+  endTimeMs,
+  hourlyRate,
+  saleFromHour,
+  saleToHour,
+  saleHourlyRate,
+  timezoneOffsetMinutes = 240, // Default to Georgia (UTC+4)
+}) => {
+  if (!startTimeMs || !endTimeMs || endTimeMs <= startTimeMs) return "0.00";
+  const tzOffsetMs = timezoneOffsetMinutes * 60 * 1000;
+  let cursorMs = startTimeMs;
+  let total = 0;
+
+  while (cursorMs < endTimeMs) {
+    // Work in adjusted timezone by shifting milliseconds, compute hour boundary, then shift back
+    const adj = new Date(cursorMs + tzOffsetMs);
+    const hourOfDay = adj.getUTCHours();
+
+    const nextAdj = new Date(adj);
+    nextAdj.setUTCMinutes(0, 0, 0);
+    nextAdj.setUTCHours(nextAdj.getUTCHours() + 1);
+    const nextBoundaryMs = nextAdj.getTime() - tzOffsetMs; // convert back to real ms
+
+    const segmentEndMs = Math.min(nextBoundaryMs, endTimeMs);
+    const durationSeconds = (segmentEndMs - cursorMs) / 1000;
+
+    const normalizedFrom = saleFromHour;
+    const normalizedTo = saleToHour;
+    const inSale = normalizedFrom < normalizedTo
+      ? hourOfDay >= normalizedFrom && hourOfDay < normalizedTo
+      : (hourOfDay >= normalizedFrom || hourOfDay < normalizedTo);
+
+    const rate = inSale ? saleHourlyRate : hourlyRate;
+    total += (durationSeconds / 3600) * rate;
+
+    cursorMs = segmentEndMs;
+  }
+
+  return total.toFixed(2);
+};
+
+/**
  * Plays a sound file.
  * @param {string} soundFileRelativePath - Relative path from the public folder (e.g., '/sounds/payment.mp3').
  */
