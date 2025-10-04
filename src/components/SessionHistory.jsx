@@ -33,7 +33,7 @@ const SessionHistory = ({ history }) => {
                 <td>{session.tableName}</td>
                 <td>{new Date(session.endTime).toLocaleString()}</td>
                 <td>{formatTime(session.durationPlayed)}</td>
-                <td>{session.amountPaid.toFixed(2)} GEL</td>
+                <td>{session.amountPaid} GEL</td>
                 <td>{session.sessionType}</td>
               </tr>
             ))}

@@ -1,0 +1,87 @@
+.sales-settings {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.sales-settings h2 {
+  margin: 0 0 16px 0;
+  text-transform: uppercase;
+}
+
+.settings-card {
+  background-color: var(--neutral-white);
+  border: 3px solid var(--text-dark);
+  border-radius: 8px;
+  box-shadow: 8px 8px 0px var(--text-dark);
+  padding: 20px;
+}
+
+.settings-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.settings-label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+}
+
+.settings-input {
+  margin-top: 6px;
+  padding: 10px;
+  border-radius: 4px;
+  border: 3px solid var(--text-dark);
+  box-shadow: 4px 4px 0px var(--text-dark);
+  font-family: var(--font-family);
+  font-weight: 600;
+}
+
+.actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.save-btn {
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 1em;
+  text-transform: uppercase;
+  padding: 12px 16px;
+  border-radius: 4px;
+  border: 3px solid var(--text-dark);
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+  box-shadow: 4px 4px 0px var(--text-dark);
+  background-color: var(--accent-yellow);
+  color: var(--text-dark);
+}
+
+.save-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px var(--text-dark);
+}
+
+.save-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px var(--text-dark);
+}
+
+.saved-chip {
+  background-color: var(--primary-blue);
+  color: var(--text-light);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-weight: 700;
+}
+
+.help-text {
+  margin-top: 12px;
+  font-size: 0.9em;
+  opacity: 0.85;
+}
+
+

@@ -74,7 +74,10 @@ export default function Analytics() {
         // Day of Week Usage
         const dayCounts = Array(7).fill(0);
         rows.forEach((row) => {
-          dayCounts[row.endDate.getDay()] += row.rawSeconds;
+          // Align Sunday=0 to Monday-first labels: Monday index 0
+          const jsDay = row.endDate.getDay(); // 0=Sun .. 6=Sat
+          const mondayFirstIndex = (jsDay + 6) % 7; // 0=Mon .. 6=Sun
+          dayCounts[mondayFirstIndex] += row.rawSeconds;
         });
 
         const dayUsageData = {
