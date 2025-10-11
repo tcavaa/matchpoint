@@ -1,6 +1,6 @@
 // src/components/TableCard.jsx
 import React, { useState } from "react";
-import { formatTime, calculateCost, calculateSegmentedPrice } from "../utils/utils";
+import { formatTime, calculateCost, calculateSegmentedPrice, playTableEndSound } from "../utils/utils";
 import "./TableCard.css"; // Ensure this CSS is updated or styles are fine
 import SwitchToggle from "./SwitchToggle";
 import { HOURLY_RATE, LOCAL_STORAGE_SALES_SETTINGS_KEY } from "../config";
@@ -178,6 +178,14 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
           : `Current Cost: ${currentCost} GEL`}
       </div>
       <div className="controls">
+        <button
+          onClick={() => playTableEndSound(table.id)}
+          className="start-btn"
+          title="Play table sound"
+          style={{ flexGrow: 0 }}
+        >
+          🔊
+        </button>
         {canStart && (
           <button
             onClick={() => onOpenStartModal(table.id)}

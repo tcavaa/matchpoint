@@ -11,7 +11,7 @@ import MenuAdminPage from "./pages/MenuAdminPage";
 import Sidebar from "./components/Sidebar";
 import useCart from "./hooks/useCart";
 import useTables from "./hooks/useTables";
-import { playSound } from "./utils/utils";
+import { playSound, playTableEndSound } from "./utils/utils";
 import { SOUNDS } from "./utils/constants";
 import "./App.css";
 // App.jsx
@@ -59,7 +59,8 @@ function App() {
               table.elapsedTimeInSeconds + elapsedSinceStart;
 
             if (totalPassedTime >= table.initialCountdownSeconds) {
-              playSound(SOUNDS.TIMER_DONE); // Path from public folder
+              // Play table-specific sound with fallback
+              playTableEndSound(table.id);
               console.log(
                 `Table ${table.name} countdown finished automatically.`
               );

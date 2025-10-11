@@ -90,6 +90,28 @@ export const playSound = (soundFileRelativePath) => {
 };
 
 /**
+ * Play per-table end sound with fallback to default timer sound.
+ * Looks for /sound/table{tableId}.mp3; falls back to /sound/timer_done.mp3 on failure.
+ */
+export const playTableEndSound = (tableId) => {
+  const candidates = [
+    `/sound/table${tableId}.mp3`,
+    `../../sound/table${tableId}.mp3`,
+    `/sound/timer_done.mp3`,
+    `../../sound/timer_done.mp3`,
+  ];
+
+  const tryPlay = (idx) => {
+    if (idx >= candidates.length) return;
+    const url = candidates[idx];
+    const audio = new Audio(url);
+    audio.play().catch(() => tryPlay(idx + 1));
+  };
+
+  tryPlay(0);
+};
+
+/**
  * Parse multiple date formats into a Date instance.
  * Supports examples like:
  * - "26.09.2025. 19:10:26" (DD.MM.YYYY. HH:mm:ss)
