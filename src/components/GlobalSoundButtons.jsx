@@ -21,6 +21,13 @@ export default function GlobalSoundButtons() {
       </button>
       <button
         className="start-btn global-sound-btn"
+        title="No Food On Table"
+        onClick={() => playSound("/sound/nodrinkstable.mp3")}
+      >
+        <img className="global-sound-icon" src="/nofoodtable.png" alt="No Food On Table" />
+      </button>
+      <button
+        className="start-btn global-sound-btn"
         title="Tournament"
         onClick={() => playSound("/sound/tournament.mp3")}
       >
