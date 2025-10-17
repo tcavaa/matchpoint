@@ -129,7 +129,15 @@ export default function useTables() {
       const endTimeMsForBilling = tableToClear.timerMode === 'countdown' ? purchasedEndMsForCountdown : nowMs;
 
       let amountToPay = 0;
-      if (tableToClear.fitPass) {
+      const isFoosOrHockey = tableToClear.gameType === 'foosball' || tableToClear.gameType === 'airhockey';
+      if (isFoosOrHockey) {
+        // 5 GEL per 20 minutes, prorated for both modes
+        const seconds = tableToClear.timerMode === 'countdown'
+          ? (tableToClear.initialCountdownSeconds || 0)
+          : finalElapsedTimeInSeconds;
+        const ratePerSecond = 5 / (20 * 60);
+        amountToPay = seconds * ratePerSecond;
+      } else if (tableToClear.fitPass) {
         // FitPass: 30 minutes = 6 GEL, prorated. For countdown, use purchased duration;
         // for standard, use final elapsed.
         const seconds = tableToClear.timerMode === 'countdown' ? (tableToClear.initialCountdownSeconds || 0) : finalElapsedTimeInSeconds;

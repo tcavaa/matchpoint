@@ -1,0 +1,37 @@
+.global-sound-buttons {
+  position: fixed;
+  top: 120px;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 1000;
+  background-color: var(--neutral-off-white);
+  border: 3px solid var(--text-dark);
+  border-radius: 8px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  box-shadow: 5px 5px 0px var(--text-dark);
+  padding: 12px;
+}
+
+.global-sound-btn {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.global-sound-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+@media (max-width: 768px) {
+  .global-sound-buttons { display: none; }
+}
+
+

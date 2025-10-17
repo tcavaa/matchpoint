@@ -1,5 +1,5 @@
 // src/pages/MenuAdminPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { API_URL } from '../config';
 import { applyOrder, setMenuOrder, removeFromOrder } from '../utils/menuOrder';
 import './MenuAdminPage.css'; // We'll create this CSS file next
@@ -9,6 +9,7 @@ export default function MenuAdminPage() {
   const [currentItem, setCurrentItem] = useState({ id: null, name: '', price: '' });
   const [imageFile, setImageFile] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const formRef = useRef(null);
 
   // Fetch all items from the backend when the component mounts
   useEffect(() => {
@@ -82,6 +83,14 @@ export default function MenuAdminPage() {
   const handleEdit = (item) => {
     setIsEditing(true);
     setCurrentItem({ id: item.id, name: item.name, price: item.price });
+    // Smooth scroll to form and focus name input
+    requestAnimationFrame(() => {
+      if (formRef.current) {
+        formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      const nameEl = document.getElementById('admin-name-input');
+      if (nameEl) nameEl.focus();
+    });
   };
 
   const handleDelete = async (id) => {
@@ -128,12 +137,13 @@ export default function MenuAdminPage() {
     <div className="menu-admin-container">
       <h1>Manage Bar Menu</h1>
       
-      <div className="admin-form-card">
+      <div className="admin-form-card" ref={formRef}>
         <h2>{isEditing ? 'Edit Item' : 'Add New Item'}</h2>
         <form onSubmit={handleSubmit}>
           <input
             type="text"
             name="name"
+            id="admin-name-input"
             value={currentItem.name}
             onChange={handleInputChange}
             placeholder="Item Name"
@@ -157,8 +167,8 @@ export default function MenuAdminPage() {
             required={!isEditing} // Image is only required when creating a new item
           />
           <div className="form-buttons">
-            <button type="submit">{isEditing ? 'Update Item' : 'Add Item'}</button>
-            {isEditing && <button type="button" onClick={resetForm}>Cancel Edit</button>}
+            <button className="admin-btn admin-btn-primary" type="submit">{isEditing ? 'Update Item' : 'Add Item'}</button>
+            {isEditing && <button className="admin-btn admin-btn-secondary" type="button" onClick={resetForm}>Cancel Edit</button>}
           </div>
         </form>
       </div>
@@ -179,8 +189,8 @@ export default function MenuAdminPage() {
             <span className="item-name">{item.name}</span>
             <span className="item-price">₾{item.price}</span>
             <div className="item-actions">
-              <button onClick={() => handleEdit(item)}>Edit</button>
-              <button onClick={() => handleDelete(item.id)}>Delete</button>
+              <button className="admin-btn admin-btn-primary" onClick={() => handleEdit(item)}>Edit</button>
+              <button className="admin-btn admin-btn-danger" onClick={() => handleDelete(item.id)}>Delete</button>
             </div>
           </div>
         ))}

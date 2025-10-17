@@ -1,24 +1,22 @@
 /* src/pages/MenuAdminPage.css */
 .menu-admin-container {
-  padding: 2rem;
-  max-width: 900px;
-  margin: 2rem auto;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  max-width: 1100px;
+  margin: 0 auto 40px;
 }
 
 .menu-admin-container h1, .menu-admin-container h2 {
   text-align: center;
-  color: #343a40;
+  color: var(--text-dark);
 }
 
 .admin-form-card {
-  background: #fff;
-  padding: 2rem;
+  background-color: var(--neutral-off-white);
+  border: 3px solid var(--text-dark);
   border-radius: 8px;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 20px;
+  box-shadow: 8px 8px 0px var(--text-dark);
+  margin: 0 auto 30px;
 }
 
 .admin-form-card form {
@@ -28,10 +26,12 @@
 }
 
 .admin-form-card input {
-  padding: 0.75rem;
-  border: 1px solid #ced4da;
+  padding: 12px;
+  border: 3px solid var(--text-dark);
   border-radius: 4px;
   font-size: 1rem;
+  box-shadow: 4px 4px 0px var(--text-dark);
+  background-color: var(--neutral-white);
 }
 
 .form-buttons {
@@ -40,44 +40,46 @@
   justify-content: flex-end;
 }
 
-.form-buttons button {
-  padding: 0.75rem 1.5rem;
-  border: none;
+.admin-btn {
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 1em;
+  text-transform: uppercase;
+  padding: 12px;
   border-radius: 4px;
+  border: 3px solid var(--text-dark);
   cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.2s;
+  transition: all 0.15s ease-out;
+  box-shadow: 4px 4px 0px var(--text-dark);
 }
 
-.form-buttons button[type="submit"] {
-  background-color: #007bff;
-  color: white;
+.admin-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px var(--text-dark);
 }
 
-.form-buttons button[type="submit"]:hover {
-  background-color: #0056b3;
+.admin-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px var(--text-dark);
 }
 
-.form-buttons button[type="button"] {
-  background-color: #6c757d;
-  color: white;
-}
-
-.form-buttons button[type="button"]:hover {
-  background-color: #5a6268;
-}
+.admin-btn-primary { background-color: var(--accent-yellow); color: var(--text-dark); }
+.admin-btn-secondary { background-color: var(--neutral-white); color: var(--text-dark); }
+.admin-btn-danger { background-color: var(--table-ready-text); color: var(--text-light); }
 
 .items-list {
-  background: #fff;
-  padding: 1rem;
+  background-color: var(--neutral-off-white);
+  border: 3px solid var(--text-dark);
   border-radius: 8px;
+  padding: 12px;
+  box-shadow: 8px 8px 0px var(--text-dark);
 }
 
 .item-row {
   display: flex;
   align-items: center;
-  padding: 1rem;
-  border-bottom: 1px solid #e9ecef;
+  padding: 12px;
+  border-bottom: 1px dashed var(--text-dark);
 }
 
 .item-row:last-child {
@@ -85,11 +87,13 @@
 }
 
 .item-thumbnail {
-  width: 50px;
-  height: 50px;
+  width: 56px;
+  height: 56px;
   object-fit: cover;
   border-radius: 4px;
   margin-right: 1rem;
+  border: 3px solid var(--text-dark);
+  box-shadow: 4px 4px 0px var(--text-dark);
 }
 
 .item-name {
@@ -100,7 +104,8 @@
 .item-price {
   min-width: 80px;
   text-align: right;
-  color: #28a745;
+  color: var(--table-ready-text);
+  font-weight: 700;
 }
 
 .item-actions {
@@ -109,17 +114,4 @@
   margin-left: 1rem;
 }
 
-.item-actions button {
-  padding: 0.4rem 0.8rem;
-  border: 1px solid #6c757d;
-  background-color: transparent;
-  color: #6c757d;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.item-actions button:hover {
-  background-color: #6c757d;
-  color: white;
-}
+.item-actions { align-items: center; }

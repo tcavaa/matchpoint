@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import "./StartModal.css";
 
 const StartModal = ({ table, isOpen, onClose, onStart }) => {
+  const isFoosOrHockey = table?.gameType === 'foosball' || table?.gameType === 'airhockey';
   const [mode, setMode] = useState("countdown"); // 'standard' or 'countdown'
   const [durationMinutes, setDurationMinutes] = useState(60);
   const [fitPass, setFitPass] = useState(false);
@@ -14,7 +15,7 @@ const StartModal = ({ table, isOpen, onClose, onStart }) => {
       table.id,
       mode,
       mode === "countdown" ? parseInt(durationMinutes, 10) : null,
-      { fitPass }
+      { fitPass: isFoosOrHockey ? false : fitPass }
     );
     onClose();
   };
@@ -58,17 +59,24 @@ const StartModal = ({ table, isOpen, onClose, onStart }) => {
             />
           </div>
         )}
+        {isFoosOrHockey && (
+          <div className="duration-input" style={{ marginTop: 8, opacity: 0.8 }}>
+            Pricing: 5 GEL per 20 minutes (pro‑rated)
+          </div>
+        )}
 
-        <div style={{ marginTop: 12 }}>
-          <label>
-            <input
-              type="checkbox"
-              checked={fitPass}
-              onChange={(e) => setFitPass(e.target.checked)}
-            />
-            &nbsp;FitPass (30 minutes = 6 GEL)
-          </label>
-        </div>
+        {!isFoosOrHockey && (
+          <div style={{ marginTop: 12 }}>
+            <label>
+              <input
+                type="checkbox"
+                checked={fitPass}
+                onChange={(e) => setFitPass(e.target.checked)}
+              />
+              &nbsp;FitPass (30 minutes = 6 GEL)
+            </label>
+          </div>
+        )}
 
         <div className="modal-actions">
           <button onClick={handleStart} className="confirm-start-btn">

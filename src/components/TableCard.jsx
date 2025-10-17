@@ -16,6 +16,7 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
     initialCountdownSeconds,
     sessionStartTime,
     fitPass,
+    gameType,
   } = table;
   
   let displayTimeSeconds = 0;
@@ -37,7 +38,11 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
     displayTimeSeconds = initialCountdownSeconds
       ? initialCountdownSeconds - totalPassedTime
       : 0;
-    if (fitPass) {
+    // Game-specific pricing (foosball/airhockey: 5 GEL per 20 minutes, prorated)
+    if (gameType === 'foosball' || gameType === 'airhockey') {
+      const ratePerSecond = 5 / (20 * 60);
+      sessionCost = ((initialCountdownSeconds || 0) * ratePerSecond).toFixed(2);
+    } else if (fitPass) {
       const ratePerSecond = 6 / (30 * 60);
       sessionCost = ((initialCountdownSeconds || 0) * ratePerSecond).toFixed(2);
     } else {
@@ -60,7 +65,10 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
       isRunning && timerStartTime
         ? elapsedTimeInSeconds + (Date.now() - timerStartTime) / 1000
         : elapsedTimeInSeconds;
-    if (fitPass) {
+    if (gameType === 'foosball' || gameType === 'airhockey') {
+      const ratePerSecond = 5 / (20 * 60);
+      currentCost = (displayTimeSeconds * ratePerSecond).toFixed(2);
+    } else if (fitPass) {
       const ratePerSecond = 6 / (30 * 60);
       currentCost = (displayTimeSeconds * ratePerSecond).toFixed(2);
     } else {
@@ -148,7 +156,7 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
     <div
       className={`table-card ${isRunning ? "running" : ""} ${
         timerMode === "countdown" ? "countdown-mode" : ""
-      } `}
+      } ${gameType ? `game-${gameType}` : ''} `}
       draggable={isRunning || elapsedTimeInSeconds > 0 || (timerMode === 'countdown' && initialCountdownSeconds > 0)}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
@@ -179,7 +187,7 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
       </div>
       <div className="controls">
         <button
-          onClick={() => playTableEndSound(table.id)}
+          onClick={() => playTableEndSound(table.id, table.gameType)}
           className="start-btn"
           title="Play table sound"
           style={{ flexGrow: 0 }}

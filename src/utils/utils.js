@@ -93,13 +93,20 @@ export const playSound = (soundFileRelativePath) => {
  * Play per-table end sound with fallback to default timer sound.
  * Looks for /sound/table{tableId}.mp3; falls back to /sound/timer_done.mp3 on failure.
  */
-export const playTableEndSound = (tableId) => {
+export const playTableEndSound = (tableId, gameType) => {
+  const typeToSound = {
+    foosball: '/sound/tablefootball.mp3',
+    airhockey: '/sound/tablehockey.mp3',
+    pool: '/sound/8ballpool.mp3',
+  };
+
   const candidates = [
+    gameType && typeToSound[gameType],
     `/sound/table${tableId}.mp3`,
     `../../sound/table${tableId}.mp3`,
     `/sound/timer_done.mp3`,
     `../../sound/timer_done.mp3`,
-  ];
+  ].filter(Boolean);
 
   const tryPlay = (idx) => {
     if (idx >= candidates.length) return;

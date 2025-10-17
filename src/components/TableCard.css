@@ -122,6 +122,40 @@
   color: var(--accent-yellow);
 }
 
+/* === Themed styles by game type === */
+.table-card.game-foosball {
+  background: linear-gradient(#2e7d32, #1b5e20); /* soccer field green */
+  border-color: #0b3d0b;
+  box-shadow: 8px 8px 0px #0b3d0b;
+}
+.table-card.game-foosball .timer-display {
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255,255,255,0.15) 0,
+    rgba(255,255,255,0.15) 8px,
+    transparent 8px,
+    transparent 16px
+  );
+}
+
+.table-card.game-airhockey {
+  background: radial-gradient(circle at center, #cfe8ff 0%, #90caf9 60%, #1565c0 100%);
+  border-color: #0d47a1;
+  box-shadow: 8px 8px 0px #0d47a1;
+}
+.table-card.game-airhockey .timer-display {
+  background-color: rgba(13,71,161,0.6);
+}
+
+.table-card.game-pool {
+  background: linear-gradient(#00695c, #004d40); /* pool table felt */
+  border-color: #00332d;
+  box-shadow: 8px 8px 0px #00332d;
+}
+.table-card.game-pool .timer-display {
+  background-color: rgba(0,51,45,0.5);
+}
+
 .timer-ended-indicator {
   font-size: 2em;
   font-weight: 700;

@@ -9,6 +9,7 @@ import AnalyticsPage from "./pages/AnalyticsPage";
 import SalesSettingsPage from "./pages/SalesSettingsPage";
 import MenuAdminPage from "./pages/MenuAdminPage";
 import Sidebar from "./components/Sidebar";
+import GlobalSoundButtons from "./components/GlobalSoundButtons";
 import useCart from "./hooks/useCart";
 import useTables from "./hooks/useTables";
 import { playSound, playTableEndSound } from "./utils/utils";
@@ -60,7 +61,7 @@ function App() {
 
             if (totalPassedTime >= table.initialCountdownSeconds) {
               // Play table-specific sound with fallback
-              playTableEndSound(table.id);
+              playTableEndSound(table.id, table.gameType);
               console.log(
                 `Table ${table.name} countdown finished automatically.`
               );
@@ -139,6 +140,7 @@ function App() {
           </div>
         </header>
         <main className="main-content">
+          <GlobalSoundButtons />
           <Routes>
             <Route
               path="/"

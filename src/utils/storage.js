@@ -7,10 +7,10 @@ export function initializeTables() {
     if (storedTables) {
       try {
         const parsedTables = JSON.parse(storedTables);
-        return parsedTables.map((table) => ({
-          id: table.id || uuidv4(), // Ensure ID exists
-          name: table.name || `Table ${table.id || "N/A"}`,
-          isAvailable: table.isAvailable,
+        const normalized = parsedTables.map((table, index) => ({
+          id: table.id || (index + 1), // Ensure ID exists (prefer numeric sequence)
+          name: table.name || `Table ${table.id || index + 1}`,
+          isAvailable: typeof table.isAvailable === 'boolean' ? table.isAvailable : true,
           timerStartTime:
             table.isRunning && table.timerStartTime ? table.timerStartTime : null,
           elapsedTimeInSeconds:
@@ -28,23 +28,66 @@ export function initializeTables() {
           sessionStartTime:
             typeof table.sessionStartTime === "number" ? table.sessionStartTime : null,
           fitPass: typeof table.fitPass === "boolean" ? table.fitPass : false,
+          gameType: table.gameType || 'pingpong',
         }));
+
+        // If fewer tables are stored than configured, append new defaults up to TABLE_COUNT
+        if (normalized.length < TABLE_COUNT) {
+          for (let i = normalized.length; i < TABLE_COUNT; i++) {
+            const id = i + 1;
+            const defaults = {
+              10: { name: 'Foosball', gameType: 'foosball' },
+              11: { name: 'Air hockey', gameType: 'airhockey' },
+              12: { name: '8-Ball Pool', gameType: 'pool' },
+            };
+            const special = defaults[id] || { name: `Table ${id}`, gameType: 'pingpong' };
+            normalized.push({
+              id,
+              name: special.name,
+              timerStartTime: null,
+              elapsedTimeInSeconds: 0,
+              isRunning: false,
+              timerMode: "standard",
+              initialCountdownSeconds: null,
+              isAvailable: true,
+              sessionStartTime: null,
+              fitPass: false,
+              gameType: special.gameType,
+            });
+          }
+          try {
+            localStorage.setItem(LOCAL_STORAGE_TABLES_KEY, JSON.stringify(normalized));
+          } catch {}
+        }
+
+        return normalized;
       } catch (e) {
         console.error("Error parsing stored tables in initializeTables:", e);
       }
     }
-    return Array.from({ length: TABLE_COUNT }, (_, i) => ({
-      id: i + 1,
-      name: `Table ${i + 1}`,
-      timerStartTime: null,
-      elapsedTimeInSeconds: 0,
-      isRunning: false,
-      timerMode: "standard",
-      initialCountdownSeconds: null,
-      isAvailable: true,
-      sessionStartTime: null,
-      fitPass: false,
-    }));
+    return Array.from({ length: TABLE_COUNT }, (_, i) => {
+      const id = i + 1;
+      // Default 1-9 ping pong; 10 foosball; 11 air hockey; 12 pool
+      const defaults = {
+          10: { name: 'Foosball', gameType: 'foosball' },
+          11: { name: 'Air hockey', gameType: 'airhockey' },
+          12: { name: '8-Ball Pool', gameType: 'pool' },
+      };
+      const special = defaults[id] || { name: `Table ${id}`, gameType: 'pingpong' };
+      return {
+        id,
+        name: special.name,
+        timerStartTime: null,
+        elapsedTimeInSeconds: 0,
+        isRunning: false,
+        timerMode: "standard",
+        initialCountdownSeconds: null,
+        isAvailable: true,
+        sessionStartTime: null,
+        fitPass: false,
+        gameType: special.gameType,
+      };
+    });
 }
 
 export function initializeHistory() {
