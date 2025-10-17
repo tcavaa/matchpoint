@@ -97,7 +97,6 @@ export const playTableEndSound = (tableId, gameType) => {
   const typeToSound = {
     foosball: '/sound/tablefootball.mp3',
     airhockey: '/sound/tablehockey.mp3',
-    pool: '/sound/8ballpool.mp3',
   };
 
   const candidates = [

@@ -147,14 +147,7 @@
   background-color: rgba(13,71,161,0.6);
 }
 
-.table-card.game-pool {
-  background: linear-gradient(#00695c, #004d40); /* pool table felt */
-  border-color: #00332d;
-  box-shadow: 8px 8px 0px #00332d;
-}
-.table-card.game-pool .timer-display {
-  background-color: rgba(0,51,45,0.5);
-}
+/* pool removed */
 
 .timer-ended-indicator {
   font-size: 2em;

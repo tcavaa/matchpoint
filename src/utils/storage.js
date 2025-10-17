@@ -38,7 +38,6 @@ export function initializeTables() {
             const defaults = {
               10: { name: 'Foosball', gameType: 'foosball' },
               11: { name: 'Air hockey', gameType: 'airhockey' },
-              12: { name: '8-Ball Pool', gameType: 'pool' },
             };
             const special = defaults[id] || { name: `Table ${id}`, gameType: 'pingpong' };
             normalized.push({
@@ -55,23 +54,69 @@ export function initializeTables() {
               gameType: special.gameType,
             });
           }
-          try {
-            localStorage.setItem(LOCAL_STORAGE_TABLES_KEY, JSON.stringify(normalized));
-          } catch {}
         }
 
-        return normalized;
+        // Ensure at most 8 pingpong tables; keep foosball and airhockey; drop pool
+        let pingpong = normalized.filter(t => t.gameType === 'pingpong');
+        const foos = normalized.find(t => t.gameType === 'foosball');
+        const hockey = normalized.find(t => t.gameType === 'airhockey');
+
+        // limit pingpong to 8
+        pingpong = pingpong.slice(0, 8);
+
+        // rebuild in order: pingpong(8) + foos + hockey, then trim/pad to TABLE_COUNT
+        let rebuilt = [...pingpong];
+        if (foos) rebuilt.push(foos);
+        if (hockey) rebuilt.push(hockey);
+
+        // If one of foos/hockey is missing, append defaults to ensure presence
+        if (!foos && rebuilt.length < TABLE_COUNT) {
+          rebuilt.push({
+            id: rebuilt.length + 1,
+            name: 'Foosball',
+            timerStartTime: null,
+            elapsedTimeInSeconds: 0,
+            isRunning: false,
+            timerMode: 'standard',
+            initialCountdownSeconds: null,
+            isAvailable: true,
+            sessionStartTime: null,
+            fitPass: false,
+            gameType: 'foosball',
+          });
+        }
+        if (!hockey && rebuilt.length < TABLE_COUNT) {
+          rebuilt.push({
+            id: rebuilt.length + 1,
+            name: 'Air hockey',
+            timerStartTime: null,
+            elapsedTimeInSeconds: 0,
+            isRunning: false,
+            timerMode: 'standard',
+            initialCountdownSeconds: null,
+            isAvailable: true,
+            sessionStartTime: null,
+            fitPass: false,
+            gameType: 'airhockey',
+          });
+        }
+
+        let migrated = rebuilt.slice(0, TABLE_COUNT);
+        try {
+          localStorage.setItem(LOCAL_STORAGE_TABLES_KEY, JSON.stringify(migrated));
+        } catch {}
+
+        return migrated;
       } catch (e) {
         console.error("Error parsing stored tables in initializeTables:", e);
       }
     }
     return Array.from({ length: TABLE_COUNT }, (_, i) => {
       const id = i + 1;
-      // Default 1-9 ping pong; 10 foosball; 11 air hockey; 12 pool
+      // Default 1-8 ping pong; 9 foosball; 10 air hockey
       const defaults = {
-          10: { name: 'Foosball', gameType: 'foosball' },
-          11: { name: 'Air hockey', gameType: 'airhockey' },
-          12: { name: '8-Ball Pool', gameType: 'pool' },
+          9: { name: 'Foosball', gameType: 'foosball' },
+          10: { name: 'Air hockey', gameType: 'airhockey' },
       };
       const special = defaults[id] || { name: `Table ${id}`, gameType: 'pingpong' };
       return {
