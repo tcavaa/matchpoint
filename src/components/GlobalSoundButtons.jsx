@@ -5,34 +5,37 @@ import { playSound } from "../utils/utils";
 export default function GlobalSoundButtons() {
   return (
     <div className="global-sound-buttons" aria-label="Global Sound Buttons">
-      <button
-        className="start-btn global-sound-btn"
-        title="No Food/Drinks"
-        onClick={() => playSound("/sound/nofoods.mp3")}
-      >
-        <img className="global-sound-icon" src="/nofood.png" alt="No Food or Drinks" />
-      </button>
-      <button
-        className="start-btn global-sound-btn"
-        title="Do Not Lean"
-        onClick={() => playSound("/sound/donotlean.mp3")}
-      >
-        <img className="global-sound-icon" src="/nolean.png" alt="Do Not Lean" />
-      </button>
-      <button
-        className="start-btn global-sound-btn"
-        title="No Food On Table"
-        onClick={() => playSound("/sound/nodrinkstable.mp3")}
-      >
-        <img className="global-sound-icon" src="/nofoodtable.png" alt="No Food On Table" />
-      </button>
-      <button
-        className="start-btn global-sound-btn"
-        title="Tournament"
-        onClick={() => playSound("/sound/tournament.mp3")}
-      >
-        <img className="global-sound-icon" src="/tournament.png" alt="Tournament" />
-      </button>
+      <div className="global-sound-drawer-handle" aria-hidden="true" />
+      <div className="global-sound-drawer-content">
+        <button
+          className="start-btn global-sound-btn"
+          title="No Food/Drinks"
+          onClick={() => playSound("/sound/nofoods.mp3")}
+        >
+          <img className="global-sound-icon" src="/nofood.png" alt="No Food or Drinks" />
+        </button>
+        <button
+          className="start-btn global-sound-btn"
+          title="Do Not Lean"
+          onClick={() => playSound("/sound/donotlean.mp3")}
+        >
+          <img className="global-sound-icon" src="/nolean.png" alt="Do Not Lean" />
+        </button>
+        <button
+          className="start-btn global-sound-btn"
+          title="No Food On Table"
+          onClick={() => playSound("/sound/nodrinkstable.mp3")}
+        >
+          <img className="global-sound-icon" src="/nofoodtable.png" alt="No Food On Table" />
+        </button>
+        <button
+          className="start-btn global-sound-btn"
+          title="Tournament"
+          onClick={() => playSound("/sound/tournament.mp3")}
+        >
+          <img className="global-sound-icon" src="/tournament.png" alt="Tournament" />
+        </button>
+      </div>
     </div>
   );
 }

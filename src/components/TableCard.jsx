@@ -17,11 +17,13 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
     sessionStartTime,
     fitPass,
     gameType,
+    hourlyRate,
   } = table;
   
   let displayTimeSeconds = 0;
   let currentCost = "0.00";
   let sessionCost = "0.00"; // Cost for the entire session (especially for countdown)
+  const hasCustomRate = typeof hourlyRate === "number" && hourlyRate > 0;
 
   // Load sales settings with defaults
   let sales = { saleFromHour: 12, saleToHour: 15, saleHourlyRate: 12 };
@@ -38,12 +40,15 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
     displayTimeSeconds = initialCountdownSeconds
       ? initialCountdownSeconds - totalPassedTime
       : 0;
-    // Game-specific pricing (foosball/airhockey: 5 GEL per 20 minutes, prorated)
+    // Game-specific pricing (foosball/airhockey: 12 GEL per hour, prorated)
     if (gameType === 'foosball' || gameType === 'airhockey') {
-      const ratePerSecond = 5 / (20 * 60);
+      const ratePerSecond = 12 / 3600;
       sessionCost = ((initialCountdownSeconds || 0) * ratePerSecond).toFixed(2);
     } else if (fitPass) {
       const ratePerSecond = 6 / (30 * 60);
+      sessionCost = ((initialCountdownSeconds || 0) * ratePerSecond).toFixed(2);
+    } else if (hasCustomRate) {
+      const ratePerSecond = hourlyRate / 3600;
       sessionCost = ((initialCountdownSeconds || 0) * ratePerSecond).toFixed(2);
     } else {
       const startMs = sessionStartTime || Date.now();
@@ -66,10 +71,13 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
         ? elapsedTimeInSeconds + (Date.now() - timerStartTime) / 1000
         : elapsedTimeInSeconds;
     if (gameType === 'foosball' || gameType === 'airhockey') {
-      const ratePerSecond = 5 / (20 * 60);
+      const ratePerSecond = 12 / 3600;
       currentCost = (displayTimeSeconds * ratePerSecond).toFixed(2);
     } else if (fitPass) {
       const ratePerSecond = 6 / (30 * 60);
+      currentCost = (displayTimeSeconds * ratePerSecond).toFixed(2);
+    } else if (hasCustomRate) {
+      const ratePerSecond = hourlyRate / 3600;
       currentCost = (displayTimeSeconds * ratePerSecond).toFixed(2);
     } else {
       const startMs = sessionStartTime || Date.now() - displayTimeSeconds * 1000;
@@ -122,7 +130,7 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
             textTransform: "uppercase",
           }}
         >
-          <div>{name}</div>
+          <div>{name || "Custom Timer"}</div>
         </h3>
         <div style={{ position: "absolute", top: 10, right: 10 }}>
           <SwitchToggle isAvailable={isAvailable} tableId={table.id} handleToggleAvailability={handleToggleAvailability} />
@@ -167,7 +175,7 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
         <SwitchToggle isAvailable={isAvailable} tableId={table.id} handleToggleAvailability={handleToggleAvailability} />
       </div>
       <h3>
-        <div>{name}</div>
+        <div>{name || "Custom Timer"}</div>
       </h3>
       <div className="timer-mode-display">
         Mode:{" "}

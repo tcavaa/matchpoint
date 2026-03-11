@@ -3,76 +3,76 @@
   position: relative;
   background-color: var(--primary-blue);
   color: var(--text-light);
-  padding: 20px;
+  padding: 14px;
   border-radius: 8px;
   display: flex;
   flex-direction: column;
   text-align: center;
   /* Hard Shadow Effect */
-  box-shadow: 8px 8px 0px var(--primary-blue-dark);
+  box-shadow: 6px 6px 0px var(--primary-blue-dark);
   border: 3px solid var(--primary-blue-dark);
   transition: all 0.2s ease-in-out;
 }
 
 .table-card:hover {
   transform: translate(-4px, -4px);
-  box-shadow: 12px 12px 0px var(--primary-blue-dark);
+  box-shadow: 9px 9px 0px var(--primary-blue-dark);
 }
 
 .table-card h3 {
-  margin: 0 0 10px 0;
-  font-size: 2em;
+  margin: 0 0 8px 0;
+  font-size: 1.55em;
   font-weight: 700;
   text-transform: uppercase;
 }
 
 .timer-mode-display {
-  font-size: 0.9em;
+  font-size: 0.75em;
   font-weight: 500;
   opacity: 0.8;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 }
 
 .timer-display {
   font-family: "Roboto Mono", monospace; /* Keep a monospace font for timers */
-  font-size: 2.2em;
+  font-size: 1.75em;
   font-weight: 700;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
   background-color: var(--primary-blue-dark);
-  padding: 10px;
+  padding: 8px;
   border-radius: 4px;
   color: var(--neutral-white);
 }
 
 .cost-display {
-  font-size: 1em;
+  font-size: 0.9em;
   font-weight: 600;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .controls {
   display: flex;
-  gap: 10px;
+  gap: 6px;
   width: 100%;
 }
 
 .controls button {
   font-family: var(--font-family);
   font-weight: 600;
-  font-size: 1em;
+  font-size: 0.78em;
   text-transform: uppercase;
-  padding: 12px;
+  padding: 8px 6px;
   border-radius: 4px;
-  border: 3px solid var(--text-dark);
+  border: 2px solid var(--text-dark);
   cursor: pointer;
   flex-grow: 1;
   transition: all 0.15s ease-out;
-  box-shadow: 4px 4px 0px var(--text-dark);
+  box-shadow: 3px 3px 0px var(--text-dark);
 }
 
 .controls button:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0px var(--text-dark);
+  box-shadow: 5px 5px 0px var(--text-dark);
 }
 
 .controls button:active {
@@ -106,7 +106,7 @@
 
 /* === State-Specific Styles === */
 .table-card.running {
-  box-shadow: 8px 8px 0px var(--accent-yellow);
+  box-shadow: 6px 6px 0px var(--accent-yellow);
   background-color: var(--primary-blue-active);
 }
 
@@ -115,7 +115,7 @@
 }
 
 .table-card.running:hover {
-  box-shadow: 12px 12px 0px var(--accent-yellow);
+  box-shadow: 9px 9px 0px var(--accent-yellow);
 }
 
 .table-card.countdown-mode .timer-display {
@@ -126,7 +126,7 @@
 .table-card.game-foosball {
   background: linear-gradient(#2e7d32, #1b5e20); /* soccer field green */
   border-color: #0b3d0b;
-  box-shadow: 8px 8px 0px #0b3d0b;
+  box-shadow: 6px 6px 0px #0b3d0b;
 }
 .table-card.game-foosball .timer-display {
   background: repeating-linear-gradient(
@@ -141,22 +141,131 @@
 .table-card.game-airhockey {
   background: radial-gradient(circle at center, #cfe8ff 0%, #90caf9 60%, #1565c0 100%);
   border-color: #0d47a1;
-  box-shadow: 8px 8px 0px #0d47a1;
+  box-shadow: 6px 6px 0px #0d47a1;
 }
 .table-card.game-airhockey .timer-display {
   background-color: rgba(13,71,161,0.6);
 }
 
+.table-card.game-playstation {
+  background:
+    radial-gradient(circle at top, rgba(56, 189, 248, 0.25), transparent 45%),
+    linear-gradient(160deg, #020617 0%, #0b1120 48%, #172554 100%);
+  border-color: #38bdf8;
+  box-shadow: 6px 6px 0px #0f172a;
+  color: #e2e8f0;
+}
+
+.table-card.game-playstation h3 {
+  letter-spacing: 1px;
+  color: #f8fafc;
+  text-shadow: 0 0 8px rgba(56, 189, 248, 0.45);
+}
+
+.table-card.game-playstation .timer-mode-display {
+  color: #bfdbfe;
+  opacity: 1;
+}
+
+.table-card.game-playstation .timer-display {
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0.9), rgba(15, 23, 42, 0.95));
+  border: 1px solid rgba(56, 189, 248, 0.7);
+  box-shadow: inset 0 0 14px rgba(56, 189, 248, 0.25), 0 0 12px rgba(56, 189, 248, 0.25);
+  color: #e0f2fe;
+}
+
+.table-card.game-playstation .cost-display {
+  color: #bae6fd;
+}
+
+.table-card.game-playstation .start-btn {
+  background: linear-gradient(180deg, #38bdf8, #0ea5e9);
+  color: #062033;
+  border-color: #082f49;
+}
+
+.table-card.game-playstation .stop-btn {
+  background: linear-gradient(180deg, #f43f5e, #be123c);
+  border-color: #4c0519;
+}
+
+.table-card.game-playstation .pay-clear-btn {
+  background: linear-gradient(180deg, #e2e8f0, #cbd5e1);
+  border-color: #334155;
+}
+
+.table-card.game-playstation.running {
+  box-shadow: 6px 6px 0px #0ea5e9;
+}
+
+.table-card.game-custom {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgba(120, 72, 32, 0.07) 0px,
+      rgba(120, 72, 32, 0.07) 6px,
+      rgba(161, 103, 57, 0.04) 6px,
+      rgba(161, 103, 57, 0.04) 12px
+    ),
+    linear-gradient(160deg, #d7b893 0%, #c79b6c 55%, #b98754 100%);
+  border-color: #7a4b26;
+  box-shadow: 6px 6px 0px #6a3f21;
+  color: #2d1b0f;
+}
+
+.table-card.game-custom h3 {
+  color: #3b2415;
+  text-shadow: 0 1px 0 rgba(255, 245, 230, 0.35);
+}
+
+.table-card.game-custom .timer-mode-display {
+  color: #5c3a23;
+  opacity: 0.95;
+}
+
+.table-card.game-custom .timer-display {
+  background: linear-gradient(180deg, #ecd3b3, #dfbc94);
+  color: #3a2415;
+  border: 1px solid rgba(106, 63, 33, 0.45);
+  box-shadow: inset 0 0 8px rgba(122, 75, 38, 0.2);
+}
+
+.table-card.game-custom .cost-display {
+  color: #4a2f1c;
+}
+
+.table-card.game-custom .start-btn {
+  background: linear-gradient(180deg, #f2d3a8, #dfb47f);
+  color: #3a2415;
+  border-color: #704326;
+}
+
+.table-card.game-custom .stop-btn {
+  background: linear-gradient(180deg, #c88b62, #ac6c45);
+  color: #fff7ef;
+  border-color: #6e3f24;
+}
+
+.table-card.game-custom .pay-clear-btn {
+  background: linear-gradient(180deg, #f7e4c8, #e9cda8);
+  color: #3a2415;
+  border-color: #704326;
+}
+
+.table-card.game-custom.running {
+  box-shadow: 6px 6px 0px #8a5a33;
+}
+
 /* pool removed */
 
 .timer-ended-indicator {
-  font-size: 2em;
+  font-size: 1.5em;
   font-weight: 700;
   color: var(--text-light);
   background-color: var(--table-ready-text);
   border-radius: 4px;
-  margin-bottom: 15px;
-  padding: 10px;
+  margin-bottom: 10px;
+  padding: 8px;
 
   animation: pulse 1.5s infinite;
 }

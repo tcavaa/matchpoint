@@ -27,8 +27,11 @@ export function initializeTables() {
           // new fields for pricing logic
           sessionStartTime:
             typeof table.sessionStartTime === "number" ? table.sessionStartTime : null,
+          sessionEndTime:
+            typeof table.sessionEndTime === "number" ? table.sessionEndTime : null,
           fitPass: typeof table.fitPass === "boolean" ? table.fitPass : false,
           gameType: table.gameType || 'pingpong',
+          hourlyRate: typeof table.hourlyRate === "number" ? table.hourlyRate : null,
         }));
 
         // If fewer tables are stored than configured, append new defaults up to TABLE_COUNT
@@ -36,8 +39,10 @@ export function initializeTables() {
           for (let i = normalized.length; i < TABLE_COUNT; i++) {
             const id = i + 1;
             const defaults = {
-              10: { name: 'Foosball', gameType: 'foosball' },
-              11: { name: 'Air hockey', gameType: 'airhockey' },
+              9: { name: 'Foosball', gameType: 'foosball' },
+              10: { name: 'Air hockey', gameType: 'airhockey' },
+              11: { name: 'PlayStation', gameType: 'playstation', hourlyRate: 20 },
+              12: { name: 'Blank Timer', gameType: 'custom', hourlyRate: null },
             };
             const special = defaults[id] || { name: `Table ${id}`, gameType: 'pingpong' };
             normalized.push({
@@ -50,26 +55,32 @@ export function initializeTables() {
               initialCountdownSeconds: null,
               isAvailable: true,
               sessionStartTime: null,
+              sessionEndTime: null,
               fitPass: false,
               gameType: special.gameType,
+              hourlyRate: special.hourlyRate ?? null,
             });
           }
         }
 
-        // Ensure at most 8 pingpong tables; keep foosball and airhockey; drop pool
+        // Ensure at most 8 pingpong tables and keep game-specific tables in fixed order
         let pingpong = normalized.filter(t => t.gameType === 'pingpong');
         const foos = normalized.find(t => t.gameType === 'foosball');
         const hockey = normalized.find(t => t.gameType === 'airhockey');
+        const playstation = normalized.find(t => t.gameType === 'playstation');
+        const custom = normalized.find(t => t.gameType === 'custom');
 
         // limit pingpong to 8
         pingpong = pingpong.slice(0, 8);
 
-        // rebuild in order: pingpong(8) + foos + hockey, then trim/pad to TABLE_COUNT
+        // rebuild in order: pingpong(8) + foos + hockey + playstation + custom
         let rebuilt = [...pingpong];
         if (foos) rebuilt.push(foos);
         if (hockey) rebuilt.push(hockey);
+        if (playstation) rebuilt.push(playstation);
+        if (custom) rebuilt.push(custom);
 
-        // If one of foos/hockey is missing, append defaults to ensure presence
+        // Ensure special tables exist
         if (!foos && rebuilt.length < TABLE_COUNT) {
           rebuilt.push({
             id: rebuilt.length + 1,
@@ -81,8 +92,10 @@ export function initializeTables() {
             initialCountdownSeconds: null,
             isAvailable: true,
             sessionStartTime: null,
+            sessionEndTime: null,
             fitPass: false,
             gameType: 'foosball',
+            hourlyRate: null,
           });
         }
         if (!hockey && rebuilt.length < TABLE_COUNT) {
@@ -96,8 +109,44 @@ export function initializeTables() {
             initialCountdownSeconds: null,
             isAvailable: true,
             sessionStartTime: null,
+            sessionEndTime: null,
             fitPass: false,
             gameType: 'airhockey',
+            hourlyRate: null,
+          });
+        }
+        if (!playstation && rebuilt.length < TABLE_COUNT) {
+          rebuilt.push({
+            id: rebuilt.length + 1,
+            name: 'PlayStation',
+            timerStartTime: null,
+            elapsedTimeInSeconds: 0,
+            isRunning: false,
+            timerMode: 'standard',
+            initialCountdownSeconds: null,
+            isAvailable: true,
+            sessionStartTime: null,
+            sessionEndTime: null,
+            fitPass: false,
+            gameType: 'playstation',
+            hourlyRate: 20,
+          });
+        }
+        if (!custom && rebuilt.length < TABLE_COUNT) {
+          rebuilt.push({
+            id: rebuilt.length + 1,
+            name: 'Blank Timer',
+            timerStartTime: null,
+            elapsedTimeInSeconds: 0,
+            isRunning: false,
+            timerMode: 'standard',
+            initialCountdownSeconds: null,
+            isAvailable: true,
+            sessionStartTime: null,
+            sessionEndTime: null,
+            fitPass: false,
+            gameType: 'custom',
+            hourlyRate: null,
           });
         }
 
@@ -115,8 +164,10 @@ export function initializeTables() {
       const id = i + 1;
       // Default 1-8 ping pong; 9 foosball; 10 air hockey
       const defaults = {
-          9: { name: 'Foosball', gameType: 'foosball' },
-          10: { name: 'Air hockey', gameType: 'airhockey' },
+          9: { name: 'Foosball', gameType: 'foosball', hourlyRate: null },
+          10: { name: 'Air hockey', gameType: 'airhockey', hourlyRate: null },
+          11: { name: 'PlayStation', gameType: 'playstation', hourlyRate: 20 },
+          12: { name: 'Blank Timer', gameType: 'custom', hourlyRate: null },
       };
       const special = defaults[id] || { name: `Table ${id}`, gameType: 'pingpong' };
       return {
@@ -129,8 +180,10 @@ export function initializeTables() {
         initialCountdownSeconds: null,
         isAvailable: true,
         sessionStartTime: null,
+        sessionEndTime: null,
         fitPass: false,
         gameType: special.gameType,
+        hourlyRate: special.hourlyRate ?? null,
       };
     });
 }

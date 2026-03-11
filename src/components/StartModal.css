@@ -58,7 +58,8 @@
   color: var(--text-dark);
 }
 
-.duration-input input[type="number"] {
+.duration-input input[type="number"],
+.duration-input input[type="text"] {
   font-family: var(--font-family);
   width: 100%;
   padding: 10px;
