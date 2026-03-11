@@ -5,6 +5,35 @@
   padding-bottom:40px;
 }
 
+.sidebar-loading {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border: 2px solid var(--text-dark);
+  border-radius: 6px;
+  background-color: var(--neutral-off-white);
+  box-shadow: 3px 3px 0px var(--text-dark);
+  font-weight: 600;
+}
+
+.sidebar-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(33, 37, 41, 0.35);
+  border-top-color: var(--text-dark);
+  border-radius: 50%;
+  animation: sidebar-spin 0.7s linear infinite;
+}
+
+@keyframes sidebar-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .sidebar {
   position: fixed;
   top: 0;
@@ -74,4 +103,36 @@
 .closeButton:active {
     transform: translate(2px, 2px);
     box-shadow: 2px 2px 0px var(--text-dark);
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    left: 0;
+    right: 0;
+    width: 100vw;
+    padding: 10px;
+    border-left: none;
+    border-top: 3px solid var(--text-dark);
+    box-shadow: 0 -4px 0 var(--text-dark);
+    background: #f8f9fa;
+  }
+
+  .menu {
+    grid-template-columns: repeat(auto-fit, minmax(52px, 1fr));
+    gap: 6px;
+    padding-bottom: 18px;
+  }
+
+  .closeButton {
+    width: 44px;
+    margin-left: auto;
+    margin-bottom: 8px;
+  }
+
+  .sidebar-toggle-btn {
+    width: 100%;
+    max-width: 220px;
+    font-size: 0.85em;
+    padding: 8px;
+  }
 }

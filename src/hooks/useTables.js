@@ -1,15 +1,22 @@
 import { useState, useCallback } from "react";
-import { playSound, calculateCost, calculateSegmentedPrice } from "../utils/utils";
+import { playSound } from "../utils/utils";
 import { v4 as uuidv4 } from "uuid";
 import { SOUNDS } from "../utils/constants";
 import { initializeTables, initializeHistory } from "../utils/storage";
-import { sendToGoogleSheets } from "../services/googleSheets";
+import { createSessionHistoryRecord } from "../services/supabaseData";
+import useLiveTimersSync from "./useLiveTimersSync";
+import {
+  calculateBillingSummary,
+  getClearedTableState,
+  getFinalElapsedTimeInSeconds,
+} from "../utils/tableBilling";
 import { HOURLY_RATE, LOCAL_STORAGE_SALES_SETTINGS_KEY } from '../config';
 
 export default function useTables() {
     const [tables, setTables] = useState(initializeTables);
     const [sessionHistory, setSessionHistory] = useState(initializeHistory);
     const [showModalForTableId, setShowModalForTableId] = useState(null);
+    useLiveTimersSync(tables, setTables);
 
     const openStartModal = useCallback((tableId) => {
         setShowModalForTableId(tableId);
@@ -69,7 +76,7 @@ export default function useTables() {
                 // elapsedTimeInSeconds is kept if resuming standard timer (or 0 if new)
                 isRunning: true,
                 timerStartTime: Date.now(),
-                sessionStartTime: Date.now(),
+                sessionStartTime: table.sessionStartTime ?? Date.now(),
                 sessionEndTime: null,
                 fitPass: !!options.fitPass,
               };
@@ -112,73 +119,15 @@ export default function useTables() {
         console.error(`handlePayAndClear: Table with id ${tableId} not found.`);
         return;
       }
-      // ... (rest of the logic to calculate finalElapsedTimeInSeconds, durationForBilling, amountToPay remains the same) ...
-      let finalElapsedTimeInSeconds = tableToClear.elapsedTimeInSeconds;
-      if (tableToClear.isRunning && tableToClear.timerStartTime) {
-        finalElapsedTimeInSeconds +=
-          (Date.now() - tableToClear.timerStartTime) / 1000;
-      }
-
-      let durationForBilling = 0;
+      const finalElapsedTimeInSeconds = getFinalElapsedTimeInSeconds(tableToClear);
       const sessionTypeForHistory = tableToClear.timerMode;
-
-      if (tableToClear.timerMode === "countdown") {
-        durationForBilling = tableToClear.initialCountdownSeconds || 0;
-      } else {
-        durationForBilling = finalElapsedTimeInSeconds;
-      }
-
-      // Load sales config
-      let sales = { saleFromHour: 12, saleToHour: 15, saleHourlyRate: 12 };
-      try {
-        const raw = localStorage.getItem(LOCAL_STORAGE_SALES_SETTINGS_KEY);
-        if (raw) sales = { ...sales, ...JSON.parse(raw) };
-      } catch {}
-
-      // Determine start and end times for pricing
-      const nowMs = Date.now();
-      const startTimeMs = tableToClear.sessionStartTime || nowMs - finalElapsedTimeInSeconds * 1000;
-      const purchasedEndMsForCountdown = startTimeMs + (tableToClear.initialCountdownSeconds || 0) * 1000;
-      const standardEndMs = tableToClear.isRunning
-        ? nowMs
-        : (tableToClear.sessionEndTime || (startTimeMs + finalElapsedTimeInSeconds * 1000));
-      const endTimeMsForBilling = tableToClear.timerMode === 'countdown' ? purchasedEndMsForCountdown : standardEndMs;
-
-      let amountToPay = 0;
-      const hasCustomRate = typeof tableToClear.hourlyRate === "number" && tableToClear.hourlyRate > 0;
-      const isFoosOrHockey = tableToClear.gameType === 'foosball' || tableToClear.gameType === 'airhockey';
-      if (isFoosOrHockey) {
-        // 12 GEL per hour, prorated for both modes
-        const seconds = tableToClear.timerMode === 'countdown'
-          ? (tableToClear.initialCountdownSeconds || 0)
-          : finalElapsedTimeInSeconds;
-        const ratePerSecond = 12 / 3600;
-        amountToPay = seconds * ratePerSecond;
-      } else if (tableToClear.fitPass) {
-        // FitPass: 30 minutes = 6 GEL, prorated. For countdown, use purchased duration;
-        // for standard, use final elapsed.
-        const seconds = tableToClear.timerMode === 'countdown' ? (tableToClear.initialCountdownSeconds || 0) : finalElapsedTimeInSeconds;
-        const ratePerSecond = 6 / (30 * 60);
-        amountToPay = seconds * ratePerSecond;
-      } else if (hasCustomRate) {
-        const seconds = tableToClear.timerMode === 'countdown'
-          ? (tableToClear.initialCountdownSeconds || 0)
-          : finalElapsedTimeInSeconds;
-        amountToPay = seconds * (tableToClear.hourlyRate / 3600);
-      } else {
-        // Segmented pricing across sale window using wall clock time
-        amountToPay = parseFloat(
-          calculateSegmentedPrice({
-            startTimeMs,
-            endTimeMs: endTimeMsForBilling,
-            hourlyRate: HOURLY_RATE,
-            saleFromHour: sales.saleFromHour,
-            saleToHour: sales.saleToHour,
-            saleHourlyRate: sales.saleHourlyRate,
-            timezoneOffsetMinutes: 240,
-          })
-        );
-      }
+      const { durationForBilling, amountToPay, endTimeMsForBilling } =
+        calculateBillingSummary({
+          table: tableToClear,
+          finalElapsedTimeInSeconds,
+          hourlyRate: HOURLY_RATE,
+          salesSettingsStorageKey: LOCAL_STORAGE_SALES_SETTINGS_KEY,
+        });
 
       const newSessionDetails = {
         id: uuidv4(),
@@ -200,19 +149,7 @@ export default function useTables() {
           if (table.id === tableId) {
             playSound(SOUNDS.PAYMENT_SUCCESS);
             console.log(`handlePayAndClear: Resetting table: ${table.name}`);
-            return {
-              ...table,
-              name: table.gameType === "custom" ? "Blank Timer" : table.name,
-              hourlyRate: table.gameType === "custom" ? null : table.hourlyRate ?? null,
-              timerStartTime: null,
-              elapsedTimeInSeconds: 0,
-              isRunning: false,
-              timerMode: "standard",
-              initialCountdownSeconds: null,
-              sessionStartTime: null,
-              sessionEndTime: null,
-              fitPass: false,
-            };
+            return getClearedTableState(table);
           }
           return table;
         })
@@ -231,18 +168,12 @@ export default function useTables() {
         return updatedHistory;
       });
 
-      // 👇 --- NEW: Send data to Google Sheets --- 👇
-      sendToGoogleSheets(
-            newSessionDetails, 
-            'Session'
-          );
-      // 👆 --- End of Google Sheets send data --- 👆
+      createSessionHistoryRecord(newSessionDetails).catch((error) => {
+        console.error("Failed to save session history to Supabase:", error);
+      });
     },
     [
       tables,
-      HOURLY_RATE,
-      calculateCost,
-      playSound,
       setTables,
       setSessionHistory,
     ]
@@ -255,6 +186,11 @@ export default function useTables() {
       const fromTable = prevTables.find((t) => t.id === fromTableId);
       const toTable = prevTables.find((t) => t.id === toTableId);
       if (!fromTable || !toTable) return prevTables;
+      const toTableBusy =
+        toTable.isRunning ||
+        toTable.elapsedTimeInSeconds > 0 ||
+        (toTable.timerMode === "countdown" && (toTable.initialCountdownSeconds || 0) > 0);
+      if (toTableBusy) return prevTables;
 
       // Calculate total elapsed on source (including running segment)
       let totalElapsedOnSource = fromTable.elapsedTimeInSeconds || 0;

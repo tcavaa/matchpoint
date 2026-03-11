@@ -1,26 +1,29 @@
 // src/App.jsx
 import React, { useState, useEffect, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import TableCard from "./components/TableCard";
 import StartModal from "./components/StartModal";
-import SessionHistory from "./components/SessionHistory";
-import CocktailRecipes from "./components/CocktailRecipes";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import SalesSettingsPage from "./pages/SalesSettingsPage";
 import MenuAdminPage from "./pages/MenuAdminPage";
-import Sidebar from "./components/Sidebar";
+import BookingsPage from "./pages/BookingsPage";
 import GlobalSoundButtons from "./components/GlobalSoundButtons";
+import HomeDashboard from "./components/HomeDashboard";
+import BookingNotifications from "./components/BookingNotifications";
 import useCart from "./hooks/useCart";
 import useTables from "./hooks/useTables";
-import { playSound, playTableEndSound } from "./utils/utils";
-import { SOUNDS } from "./utils/constants";
+import useBookingNotifications from "./hooks/useBookingNotifications";
+import useActiveBookingsCount from "./hooks/useActiveBookingsCount";
+import { playTableEndSound } from "./utils/utils";
 import "./App.css";
+import "./components/BookingNotifications.css";
 // App.jsx
 import { HOURLY_RATE, LOCAL_STORAGE_TABLES_KEY, LOCAL_STORAGE_HISTORY_KEY } from './config';
 
 function App() {
   const [_, setTick] = useState(0); // To force re-render for running timers
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { notifications, dismissNotification } = useBookingNotifications();
+  const activeBookingsCount = useActiveBookingsCount();
   const { cart, addToCart, incrementQuantity, decrementQuantity, removeItem, calculateTotal, handleSubmit } = useCart();
   const { 
     tables, 
@@ -44,51 +47,46 @@ function App() {
   useEffect(() => {
     const intervalId = setInterval(() => {
       let needsVisualUpdate = false;
-      let tableStateChangedDueToCountdown = false;
 
-      const newTables = tables.map((table) => {
-        if (table.isRunning) {
-          needsVisualUpdate = true; // A timer is running, so visual update is needed
+      setTables((prevTables) => {
+        let tableStateChangedDueToCountdown = false;
+
+        const newTables = prevTables.map((table) => {
+          if (!table.isRunning) return table;
+
+          needsVisualUpdate = true;
           if (
             table.timerMode === "countdown" &&
             table.initialCountdownSeconds &&
             table.timerStartTime
           ) {
-            const elapsedSinceStart =
-              (Date.now() - table.timerStartTime) / 1000;
-            const totalPassedTime =
-              table.elapsedTimeInSeconds + elapsedSinceStart;
+            const elapsedSinceStart = (Date.now() - table.timerStartTime) / 1000;
+            const totalPassedTime = table.elapsedTimeInSeconds + elapsedSinceStart;
 
             if (totalPassedTime >= table.initialCountdownSeconds) {
-              // Play table-specific sound with fallback
               playTableEndSound(table.id, table.gameType);
-              console.log(
-                `Table ${table.name} countdown finished automatically.`
-              );
               tableStateChangedDueToCountdown = true;
               return {
                 ...table,
                 isRunning: false,
-                // Ensure elapsed time is exactly the countdown duration
                 elapsedTimeInSeconds: table.initialCountdownSeconds,
-                timerStartTime: null, // Clear start time as it's no longer running
+                timerStartTime: null,
               };
             }
           }
-        }
-        return table;
+          return table;
+        });
+
+        return tableStateChangedDueToCountdown ? newTables : prevTables;
       });
 
-      if (tableStateChangedDueToCountdown) {
-        setTables(newTables); // Update tables state if a countdown finished
-      }
       if (needsVisualUpdate) {
-        setTick((prevTick) => prevTick + 1); // Trigger re-render for visual time update
+        setTick((prevTick) => prevTick + 1);
       }
     }, 1000);
 
     return () => clearInterval(intervalId);
-  }, [tables]); // Re-run if tables array reference changes
+  }, [setTables]);
 
   // Save tables to local storage
   useEffect(() => {
@@ -125,9 +123,20 @@ function App() {
     <Router>
       <div className="app">
         <header className="app-header">
-          <Link className="logo" to=''><h1>🏓 MatchPoint Table Manager</h1></Link>
+          <Link className="logo" to=''>
+            <h1>
+              <img src="/matchpoint-logo.png" alt="MatchPoint logo" className="header-logo-image" />
+              MatchPoint Table Manager
+            </h1>
+          </Link>
           <div className="nav-container">
             <Link className="nav-link" to='/admin/menu'>Manage Bar</Link>
+            <Link className="nav-link nav-link-with-badge" to='/admin/bookings'>
+              Bookings
+              {activeBookingsCount > 0 && (
+                <span className="booking-count-badge">{activeBookingsCount}</span>
+              )}
+            </Link>
             <Link className="nav-link" to='/admin/sales'>Sale Settings</Link>
             <Link className="nav-link home-link" to='/'>Home</Link>
             <button
@@ -140,41 +149,30 @@ function App() {
           </div>
         </header>
         <main className="main-content">
+          <BookingNotifications notifications={notifications} onDismiss={dismissNotification} />
           <GlobalSoundButtons />
           <Routes>
             <Route
               path="/"
               element={
-                <>
-                <div className="tables-grid">
-                  {tables.map((table) => (
-                    <TableCard
-                      key={table.id}
-                      table={table}
-                      onOpenStartModal={openStartModal}
-                      onStop={handleStopTimer}
-                      onPayAndClear={handlePayAndClear}
-                      handleToggleAvailability={handleToggleAvailability}
-                      onTransferTimer={handleTransferTimer}
-                    />
-                  ))}
-                </div>
-                {isSidebarOpen && (
-                  <Sidebar
-                    cart={cart}
-                    increment={incrementQuantity}
-                    decrement={decrementQuantity}
-                    remove={removeItem}
-                    total={calculateTotal}
-                    submit={handleSubmit}
-                    addToCart={addToCart}
-                    toggleSidebar={toggleSidebar}
-                  />
-                )}
-                <SessionHistory history={sessionHistory} />
-                <CocktailRecipes/>
-                <Link className="analyticsButton" to='analytics'>Analytics Page</Link>
-              </>
+                <HomeDashboard
+                  tables={tables}
+                  openStartModal={openStartModal}
+                  handleStopTimer={handleStopTimer}
+                  handlePayAndClear={handlePayAndClear}
+                  handleToggleAvailability={handleToggleAvailability}
+                  handleTransferTimer={handleTransferTimer}
+                  isSidebarOpen={isSidebarOpen}
+                  cart={cart}
+                  incrementQuantity={incrementQuantity}
+                  decrementQuantity={decrementQuantity}
+                  removeItem={removeItem}
+                  calculateTotal={calculateTotal}
+                  handleSubmit={handleSubmit}
+                  addToCart={addToCart}
+                  toggleSidebar={toggleSidebar}
+                  sessionHistory={sessionHistory}
+                />
               }
             />
             <Route
@@ -187,6 +185,7 @@ function App() {
             />
             <Route path="/admin/sales" element={<SalesSettingsPage />} />
             <Route path="/admin/menu" element={<MenuAdminPage />} />
+            <Route path="/admin/bookings" element={<BookingsPage />} />
           </Routes>
         </main>
         {tableForModal && (

@@ -97,3 +97,33 @@
     color: var(--text-dark);
     margin: 15px;
 }
+
+@media (max-width: 768px) {
+  .cart {
+    grid-template-columns: 1fr;
+    padding: 8px;
+    box-shadow: 3px 3px 0px var(--text-dark);
+  }
+
+  .cart-item {
+    align-items: stretch;
+    gap: 6px;
+    padding: 6px 2px;
+  }
+
+  .cart-item-controls {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .cart-btn {
+    font-size: 0.8em;
+    padding: 7px 10px;
+    border-width: 2px;
+  }
+
+  .cart-total h3 {
+    font-size: 1.05rem;
+    margin: 10px;
+  }
+}

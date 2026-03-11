@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { sendToGoogleSheets } from '../services/googleSheets'
+import { createBarSaleRecord } from "../services/supabaseData";
 import { playSound } from "../utils/utils";
 import { SOUNDS, SALE_TYPES } from "../utils/constants";
 import { v4 as uuidv4 } from "uuid";
@@ -43,7 +43,7 @@ export default function useCart() {
     return cart.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2);
   }, [cart]);
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     // 1. Don't do anything if the cart is empty
     
     if (cart.length === 0) {
@@ -51,24 +51,24 @@ export default function useCart() {
       return;
     }
 
-    // 2. Prepare the data payload for Google Sheets
+    // Prepare the data payload for Supabase
     const total = calculateTotal();
     const saleData = {
-      type: SALE_TYPES.BAR_SALE, // This new 'type' field tells our script how to handle the data
+      type: SALE_TYPES.BAR_SALE,
       timestamp: new Date().toISOString(),
-      items: cart.map(item => `${item.name} (x${item.quantity})`).join(', '), // Creates a readable string of items
+      items: cart.map(item => `${item.name} (x${item.quantity})`).join(', '),
       totalAmount: parseFloat(total),
-      id: uuidv4() // A unique ID for this transaction
+      id: uuidv4()
     };
 
-    // 3. Check if the Google Sheets URL is configured
-    sendToGoogleSheets(
-      saleData, 
-      'Bar Sale', 
-      () => playSound(SOUNDS.PAYMENT_SUCCESS)
-    );
+    try {
+      await createBarSaleRecord(saleData);
+    } catch (error) {
+      console.error("Failed to save bar sale to Supabase:", error);
+    }
+    playSound(SOUNDS.PAYMENT_SUCCESS);
 
-    // 5. Clear the cart locally immediately after submitting
+    // Clear the cart locally immediately after submitting
     setCart([]);
   }, [cart, calculateTotal]);
 

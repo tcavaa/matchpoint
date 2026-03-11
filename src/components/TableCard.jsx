@@ -1,142 +1,42 @@
 // src/components/TableCard.jsx
-import React, { useState } from "react";
-import { formatTime, calculateCost, calculateSegmentedPrice, playTableEndSound } from "../utils/utils";
+import React from "react";
+import { formatTime, playTableEndSound } from "../utils/utils";
 import "./TableCard.css"; // Ensure this CSS is updated or styles are fine
 import SwitchToggle from "./SwitchToggle";
 import { HOURLY_RATE, LOCAL_STORAGE_SALES_SETTINGS_KEY } from "../config";
+import { getTableCardViewModel, loadSalesSettings } from "../utils/tableCardView";
+import TableCardUnavailable from "./table-card/TableCardUnavailable";
 
 const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggleAvailability, onTransferTimer }) => {
   const {
     name,
     isAvailable,
-    timerStartTime,
     elapsedTimeInSeconds,
     isRunning,
     timerMode,
     initialCountdownSeconds,
-    sessionStartTime,
-    fitPass,
     gameType,
-    hourlyRate,
   } = table;
-  
-  let displayTimeSeconds = 0;
-  let currentCost = "0.00";
-  let sessionCost = "0.00"; // Cost for the entire session (especially for countdown)
-  const hasCustomRate = typeof hourlyRate === "number" && hourlyRate > 0;
+  const sales = loadSalesSettings(LOCAL_STORAGE_SALES_SETTINGS_KEY);
+  const {
+    displayTimeSeconds,
+    currentCost,
+    sessionCost,
+    canStart,
+    canPayAndClear,
+    isCountdownEnded,
+  } = getTableCardViewModel(table, HOURLY_RATE, sales);
 
-  // Load sales settings with defaults
-  let sales = { saleFromHour: 12, saleToHour: 15, saleHourlyRate: 12 };
-  try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_SALES_SETTINGS_KEY);
-    if (raw) sales = { ...sales, ...JSON.parse(raw) };
-  } catch {}
-
-  if (timerMode === "countdown") {
-    const totalPassedTime =
-      isRunning && timerStartTime
-        ? elapsedTimeInSeconds + (Date.now() - timerStartTime) / 1000
-        : elapsedTimeInSeconds;
-    displayTimeSeconds = initialCountdownSeconds
-      ? initialCountdownSeconds - totalPassedTime
-      : 0;
-    // Game-specific pricing (foosball/airhockey: 12 GEL per hour, prorated)
-    if (gameType === 'foosball' || gameType === 'airhockey') {
-      const ratePerSecond = 12 / 3600;
-      sessionCost = ((initialCountdownSeconds || 0) * ratePerSecond).toFixed(2);
-    } else if (fitPass) {
-      const ratePerSecond = 6 / (30 * 60);
-      sessionCost = ((initialCountdownSeconds || 0) * ratePerSecond).toFixed(2);
-    } else if (hasCustomRate) {
-      const ratePerSecond = hourlyRate / 3600;
-      sessionCost = ((initialCountdownSeconds || 0) * ratePerSecond).toFixed(2);
-    } else {
-      const startMs = sessionStartTime || Date.now();
-      const endMs = (sessionStartTime || Date.now()) + (initialCountdownSeconds || 0) * 1000;
-      sessionCost = calculateSegmentedPrice({
-        startTimeMs: startMs,
-        endTimeMs: endMs,
-        hourlyRate: HOURLY_RATE,
-        saleFromHour: sales.saleFromHour,
-        saleToHour: sales.saleToHour,
-        saleHourlyRate: sales.saleHourlyRate,
-      });
-    }
-    currentCost = sessionCost; // For countdown, cost is fixed
-    if (isRunning && displayTimeSeconds < 0) displayTimeSeconds = 0; // Don't show negative time
-  } else {
-    // Standard timer
-    displayTimeSeconds =
-      isRunning && timerStartTime
-        ? elapsedTimeInSeconds + (Date.now() - timerStartTime) / 1000
-        : elapsedTimeInSeconds;
-    if (gameType === 'foosball' || gameType === 'airhockey') {
-      const ratePerSecond = 12 / 3600;
-      currentCost = (displayTimeSeconds * ratePerSecond).toFixed(2);
-    } else if (fitPass) {
-      const ratePerSecond = 6 / (30 * 60);
-      currentCost = (displayTimeSeconds * ratePerSecond).toFixed(2);
-    } else if (hasCustomRate) {
-      const ratePerSecond = hourlyRate / 3600;
-      currentCost = (displayTimeSeconds * ratePerSecond).toFixed(2);
-    } else {
-      const startMs = sessionStartTime || Date.now() - displayTimeSeconds * 1000;
-      const endMs = isRunning ? Date.now() : startMs + displayTimeSeconds * 1000;
-      currentCost = calculateSegmentedPrice({
-        startTimeMs: startMs,
-        endTimeMs: endMs,
-        hourlyRate: HOURLY_RATE,
-        saleFromHour: sales.saleFromHour,
-        saleToHour: sales.saleToHour,
-        saleHourlyRate: sales.saleHourlyRate,
-      });
-    }
-    sessionCost = currentCost;
-  }
-
-  const canStart =
-    !isRunning &&
-    (!initialCountdownSeconds ||
-      displayTimeSeconds <= 0 ||
-      timerMode === "standard");
-  // Pay & Clear is available if time has run or a countdown was set
-  const canPayAndClear =
-    (timerMode === "standard" && (elapsedTimeInSeconds > 0 || isRunning)) ||
-    (timerMode === "countdown" && initialCountdownSeconds > 0);
-
-  const isCountdownEnded =
-    timerMode === "countdown" && !isRunning && displayTimeSeconds <= 0;
-
-  if (!isAvailable)
+  if (!isAvailable) {
     return (
-      <div
-        style={{
-          position: "relative",
-          backgroundColor: "#ced4da",
-          color: "darkGray",
-          padding: "20px",
-          borderRadius: "8px",
-          boxShadow: "8px 8px 0px gray",
-          display: "flex",
-          flexDirection: "column",
-          textAlign: "center",
-        }}
-      >
-        <h3
-          style={{
-            margin: "0 0 10px 0",
-            fontSize: "2em",
-            fontWeight: "700",
-            textTransform: "uppercase",
-          }}
-        >
-          <div>{name || "Custom Timer"}</div>
-        </h3>
-        <div style={{ position: "absolute", top: 10, right: 10 }}>
-          <SwitchToggle isAvailable={isAvailable} tableId={table.id} handleToggleAvailability={handleToggleAvailability} />
-        </div>
-      </div>
+      <TableCardUnavailable
+        table={table}
+        name={name}
+        isAvailable={isAvailable}
+        handleToggleAvailability={handleToggleAvailability}
+      />
     );
+  }
 
   const handleDragStart = (e) => {
     // mark source table id

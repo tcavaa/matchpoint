@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   Title,
@@ -9,8 +8,12 @@ import {
   CategoryScale,
   LinearScale,
 } from "chart.js";
-import { APPS_SCRIPT_WEB_APP_URL } from "../config";
-import { parseFlexibleDate } from "../utils/utils";
+import { fetchSessionHistoryForAnalytics } from "../services/supabaseData";
+import {
+  parseAnalyticsRows,
+  groupRowsByMonth,
+} from "../utils/analyticsCharts";
+import MonthlyAnalyticsSection from "./analytics/MonthlyAnalyticsSection";
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
 
@@ -21,9 +24,8 @@ export default function Analytics() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch(`${APPS_SCRIPT_WEB_APP_URL}?type=fetchAll`);
-        const json = await res.json();
-        setData(json);
+        const rows = await fetchSessionHistoryForAnalytics();
+        setData(rows);
       } catch (err) {
         console.error("Error fetching analytics data:", err);
       } finally {
@@ -36,33 +38,8 @@ export default function Analytics() {
   if (loading) return <p>Loading analytics...</p>;
   if (!data.length) return <p>No data found for analytics.</p>;
 
-  // Parse data with Date objects and numeric fields
-  const parsedData = data
-    .map((row) => {
-      const endDate = parseFlexibleDate(row["End Time"]);
-      return {
-        ...row,
-        endDate,
-        rawSeconds: Number(row["Raw Duration"] || 0),
-        amountPaid: Number(row["Amount Paid"] || 0),
-      };
-    })
-    .filter((row) => row.endDate instanceof Date && !isNaN(row.endDate.getTime()));
-
-  // Group data by month-year
-  const monthlyData = {};
-  parsedData.forEach((row) => {
-    const monthKey = `${row.endDate.getFullYear()}-${String(row.endDate.getMonth() + 1).padStart(2, "0")}`;
-    if (!monthlyData[monthKey]) monthlyData[monthKey] = [];
-    monthlyData[monthKey].push(row);
-  });
-
-  const dayLabels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-  // Display analytics from 12:00 (noon) to 24:00 (0:00)
-  const workingHours = [
-    ...Array.from({ length: 12 }, (_, i) => `${i + 12}:00`), // 12:00–23:00
-    "0:00", // 24:00 → 0:00
-  ];
+  const parsedData = parseAnalyticsRows(data);
+  const monthlyData = groupRowsByMonth(parsedData);
 
   return (
     <div style={{ padding: "20px" }}>
@@ -70,99 +47,9 @@ export default function Analytics() {
 
       {Object.entries(monthlyData)
         .sort(([a], [b]) => b.localeCompare(a)) // sort descending: latest month first
-        .map(([monthKey, rows]) => {
-        // Day of Week Usage
-        const dayCounts = Array(7).fill(0);
-        rows.forEach((row) => {
-          // Align Sunday=0 to Monday-first labels: Monday index 0
-          const jsDay = row.endDate.getDay(); // 0=Sun .. 6=Sat
-          const mondayFirstIndex = (jsDay + 6) % 7; // 0=Mon .. 6=Sun
-          dayCounts[mondayFirstIndex] += row.rawSeconds;
-        });
-
-        const dayUsageData = {
-          labels: dayLabels,
-          datasets: [
-            {
-              label: "Total Play Time (hours)",
-              data: dayCounts.map((s) => (s / 3600).toFixed(2)),
-              backgroundColor: "rgba(75, 192, 192, 0.7)",
-            },
-          ],
-        };
-
-        // Hour of Day Usage (12:00–23:00 + 0:00)
-        const hourCounts = Array(24).fill(0);
-        rows.forEach((row) => {
-          hourCounts[row.endDate.getHours()] += row.rawSeconds;
-        });
-
-        const workingHourCounts = [
-          ...hourCounts.slice(12, 24), // 12:00–23:00
-          ...hourCounts.slice(0, 1),   // 0:00
-        ];
-
-        const hourUsageData = {
-          labels: workingHours,
-          datasets: [
-            {
-              label: "Play Time (hours)",
-              data: workingHourCounts.map((s) => (s / 3600).toFixed(2)),
-              backgroundColor: "rgba(153, 102, 255, 0.7)",
-            },
-          ],
-        };
-
-        // Most Used Tables
-        const tableCounts = {};
-        rows.forEach((row) => {
-          const table = row["Table Name"];
-          tableCounts[table] = (tableCounts[table] || 0) + row.rawSeconds;
-        });
-
-        const tableUsageData = {
-          labels: Object.keys(tableCounts),
-          datasets: [
-            {
-              label: "Total Play Time (hours)",
-              data: Object.values(tableCounts).map((s) => (s / 3600).toFixed(2)),
-              backgroundColor: "rgba(255, 159, 64, 0.7)",
-            },
-          ],
-        };
-
-        // Average session duration
-        const avgDuration =
-          rows.reduce((sum, r) => sum + r.rawSeconds, 0) / rows.length / 60;
-
-        // Month label like "2025-08" -> "August 2025"
-        const monthLabel = new Date(monthKey + "-01").toLocaleString("default", {
-          month: "long",
-          year: "numeric",
-        });
-
-        return (
-          <div key={monthKey} style={{ marginBottom: "60px" }}>
-            <h3>{monthLabel}</h3>
-            <p>Average session duration: {avgDuration.toFixed(1)} minutes</p>
-
-            <div style={{ marginBottom: "40px" }}>
-              <h4>Day of Week Usage</h4>
-              <Bar data={dayUsageData} />
-            </div>
-
-            <div style={{ marginBottom: "40px" }}>
-              <h4>Hour of Day Usage</h4>
-              <Bar data={hourUsageData} />
-            </div>
-
-            <div style={{ marginBottom: "40px" }}>
-              <h4>Most Used Tables</h4>
-              <Bar data={tableUsageData} />
-            </div>
-          </div>
-        );
-      })}
+        .map(([monthKey, rows]) => (
+          <MonthlyAnalyticsSection key={monthKey} monthKey={monthKey} rows={rows} />
+        ))}
     </div>
   );
 }

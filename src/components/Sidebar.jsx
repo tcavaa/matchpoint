@@ -2,25 +2,25 @@ import React, { useState, useEffect } from "react";
 import "./Sidebar.css";
 import Cart from "./Cart";
 import ItemCard from "./ItemCard";
-import { API_URL } from "../config";
 import { applyOrder } from "../utils/menuOrder";
+import { fetchMenuItems as fetchMenuItemsFromSupabase } from "../services/supabaseData";
 
 export default function Sidebar({ cart, increment, decrement, remove, total, submit, addToCart, toggleSidebar }) {
   const [menuItems, setMenuItems] = useState([]);
   const [error, setError] = useState(null);
+  const [isLoadingMenu, setIsLoadingMenu] = useState(true);
 
   useEffect(() => {
     const fetchMenuItems = async () => {
       try {
-        const response = await fetch(API_URL);
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
+        setIsLoadingMenu(true);
+        const data = await fetchMenuItemsFromSupabase();
         setMenuItems(applyOrder(data));
       } catch (err) {
         console.error("Failed to fetch menu items:", err);
-        setError("Could not load menu items. Is the backend server running?");
+        setError("Could not load menu items. Check Supabase configuration.");
+      } finally {
+        setIsLoadingMenu(false);
       }
     };
 
@@ -40,6 +40,12 @@ export default function Sidebar({ cart, increment, decrement, remove, total, sub
       />
       <div className="menu">
         {error && <p className="error-message">{error}</p>}
+        {isLoadingMenu && (
+          <div className="sidebar-loading">
+            <span className="sidebar-spinner" aria-hidden="true" />
+            <span>Loading menu...</span>
+          </div>
+        )}
         {menuItems.map(item => (
           <ItemCard key={item.id} item={item} addToCart={addToCart} />
         ))}

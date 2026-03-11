@@ -47,3 +47,23 @@
     font-size: 0.6rem;
     color: #666;
 }
+
+@media (max-width: 768px) {
+  .item-card {
+    width: 34px;
+    padding: 0 8px;
+    margin: 2px;
+    border-width: 2px;
+    box-shadow: 2px 2px 0px var(--text-dark);
+  }
+
+  .item-image {
+    width: 32px;
+    height: 72px;
+  }
+
+  .item-card h3,
+  .item-card p {
+    font-size: 0.52rem;
+  }
+}

@@ -53,6 +53,13 @@
   box-shadow: 4px 4px 0px var(--text-dark);
 }
 
+.admin-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.75;
+  transform: none;
+  box-shadow: 2px 2px 0px var(--text-dark);
+}
+
 .admin-btn:hover {
   transform: translate(-2px, -2px);
   box-shadow: 6px 6px 0px var(--text-dark);
@@ -67,12 +74,44 @@
 .admin-btn-secondary { background-color: var(--neutral-white); color: var(--text-dark); }
 .admin-btn-danger { background-color: var(--table-ready-text); color: var(--text-light); }
 
+.btn-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 8px;
+  border: 2px solid rgba(33, 37, 41, 0.35);
+  border-top-color: var(--text-dark);
+  border-radius: 50%;
+  vertical-align: -1px;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .items-list {
   background-color: var(--neutral-off-white);
   border: 3px solid var(--text-dark);
   border-radius: 8px;
   padding: 12px;
   box-shadow: 8px 8px 0px var(--text-dark);
+}
+
+.menu-items-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border: 2px solid var(--text-dark);
+  border-radius: 6px;
+  box-shadow: 3px 3px 0px var(--text-dark);
+  background-color: var(--neutral-white);
+  font-weight: 600;
 }
 
 .item-row {
@@ -115,3 +154,74 @@
 }
 
 .item-actions { align-items: center; }
+
+@media (max-width: 768px) {
+  .menu-admin-container {
+    padding: 10px;
+    margin-bottom: 20px;
+  }
+
+  .menu-admin-container h1 {
+    font-size: 1.4rem;
+  }
+
+  .menu-admin-container h2 {
+    font-size: 1.05rem;
+  }
+
+  .admin-form-card,
+  .items-list {
+    padding: 10px;
+    box-shadow: 5px 5px 0px var(--text-dark);
+  }
+
+  .admin-form-card input {
+    padding: 10px;
+    font-size: 0.95rem;
+    border-width: 2px;
+    box-shadow: 3px 3px 0px var(--text-dark);
+  }
+
+  .form-buttons {
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .admin-btn {
+    width: 100%;
+    font-size: 0.82em;
+    padding: 10px;
+    border-width: 2px;
+  }
+
+  .item-row {
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 6px;
+  }
+
+  .item-thumbnail {
+    width: 44px;
+    height: 44px;
+    margin-right: 0;
+    border-width: 2px;
+    box-shadow: 3px 3px 0px var(--text-dark);
+  }
+
+  .item-name {
+    font-size: 0.95rem;
+  }
+
+  .item-price {
+    min-width: auto;
+    font-size: 0.95rem;
+  }
+
+  .item-actions {
+    grid-column: 1 / -1;
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+}
