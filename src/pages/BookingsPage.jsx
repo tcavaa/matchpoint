@@ -67,7 +67,7 @@ export default function BookingsPage() {
       const created = await createBooking({
         customerName: bookingName.trim(),
         tablesCount: Number(tablesCount),
-        hoursCount: Number(hoursCount),
+        hoursCount: hoursCount === "" ? null : Number(hoursCount),
         bookingAt: bookingDateTime ? new Date(bookingDateTime).toISOString() : null,
       });
       setBookings((prev) => {

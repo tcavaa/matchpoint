@@ -51,7 +51,7 @@ create table if not exists public.bookings (
   id uuid primary key default gen_random_uuid(),
   customer_name text not null,
   tables_count integer not null check (tables_count > 0),
-  hours_count numeric not null check (hours_count > 0),
+  hours_count numeric null check (hours_count is null or hours_count > 0),
   booking_at timestamptz null,
   is_done boolean not null default false,
   done_at timestamptz null,
@@ -131,4 +131,95 @@ add column if not exists done_at timestamptz null;
 
 alter table public.bookings
 add column if not exists booking_at timestamptz null;
+
+create or replace function public.upsert_live_timers_guarded(payload jsonb)
+returns void
+language plpgsql
+as $$
+begin
+  insert into public.live_timers (
+    table_id,
+    name,
+    is_available,
+    timer_start_time,
+    elapsed_time_in_seconds,
+    is_running,
+    timer_mode,
+    initial_countdown_seconds,
+    session_start_time,
+    session_end_time,
+    fit_pass,
+    game_type,
+    hourly_rate,
+    sync_revision,
+    updated_at
+  )
+  select
+    row_data.table_id,
+    row_data.name,
+    coalesce(row_data.is_available, true),
+    row_data.timer_start_time,
+    coalesce(row_data.elapsed_time_in_seconds, 0),
+    coalesce(row_data.is_running, false),
+    coalesce(row_data.timer_mode, 'standard'),
+    row_data.initial_countdown_seconds,
+    row_data.session_start_time,
+    row_data.session_end_time,
+    coalesce(row_data.fit_pass, false),
+    coalesce(row_data.game_type, 'pingpong'),
+    row_data.hourly_rate,
+    coalesce(row_data.sync_revision, 0),
+    now()
+  from jsonb_to_recordset(coalesce(payload, '[]'::jsonb)) as row_data(
+    table_id integer,
+    name text,
+    is_available boolean,
+    timer_start_time bigint,
+    elapsed_time_in_seconds numeric,
+    is_running boolean,
+    timer_mode text,
+    initial_countdown_seconds numeric,
+    session_start_time bigint,
+    session_end_time bigint,
+    fit_pass boolean,
+    game_type text,
+    hourly_rate numeric,
+    sync_revision bigint
+  )
+  on conflict (table_id) do update
+  set
+    name = excluded.name,
+    is_available = excluded.is_available,
+    timer_start_time = excluded.timer_start_time,
+    elapsed_time_in_seconds = excluded.elapsed_time_in_seconds,
+    is_running = excluded.is_running,
+    timer_mode = excluded.timer_mode,
+    initial_countdown_seconds = excluded.initial_countdown_seconds,
+    session_start_time = excluded.session_start_time,
+    session_end_time = excluded.session_end_time,
+    fit_pass = excluded.fit_pass,
+    game_type = excluded.game_type,
+    hourly_rate = excluded.hourly_rate,
+    sync_revision = excluded.sync_revision,
+    updated_at = now()
+  where excluded.sync_revision > public.live_timers.sync_revision;
+end;
+$$;
+
+grant execute on function public.upsert_live_timers_guarded(jsonb) to anon, authenticated;
+
+alter table public.bookings
+alter column hours_count drop not null;
+
+do $$
+begin
+  alter table public.bookings drop constraint bookings_hours_count_check;
+exception
+  when undefined_object then null;
+end
+$$;
+
+alter table public.bookings
+add constraint bookings_hours_count_check
+check (hours_count is null or hours_count > 0);
 

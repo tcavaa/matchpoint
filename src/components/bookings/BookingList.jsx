@@ -17,7 +17,8 @@ export default function BookingList({ bookings, isLoading, onMarkDone, onDelete 
         <div className="booking-row" key={booking.id}>
           <div className="booking-name">{booking.customer_name}</div>
           <div className="booking-meta">
-            {booking.tables_count} table(s) • {booking.hours_count} hour(s)
+            {booking.tables_count} table(s)
+            {booking.hours_count ? ` • ${booking.hours_count} hour(s)` : ""}
           </div>
           <div className="booking-time">
             {new Date(booking.booking_at || booking.created_at).toLocaleString()}

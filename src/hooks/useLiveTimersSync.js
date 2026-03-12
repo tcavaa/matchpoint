@@ -40,6 +40,10 @@ function hasSyncRelevantDifference(a, b) {
   return LIVE_SYNC_FIELDS.some((key) => key !== "syncRevision" && a[key] !== b[key]);
 }
 
+function getNextRevision(previousRevision = 0) {
+  return Math.max(Date.now(), Number(previousRevision || 0) + 1);
+}
+
 export default function useLiveTimersSync(tables, setTables) {
   const isApplyingRemoteSyncRef = useRef(false);
   const hasBootstrappedRemoteRef = useRef(false);
@@ -54,11 +58,13 @@ export default function useLiveTimersSync(tables, setTables) {
 
   useEffect(() => {
     let isCancelled = false;
+    let didLoadRemoteSnapshot = false;
 
     const bootstrapLiveTimers = async () => {
       try {
         const remoteTables = await fetchLiveTimers();
         if (isCancelled) return;
+        didLoadRemoteSnapshot = true;
 
         if (remoteTables.length > 0) {
           isApplyingRemoteSyncRef.current = true;
@@ -74,7 +80,11 @@ export default function useLiveTimersSync(tables, setTables) {
             })
           );
         } else {
-          const revision = Date.now();
+          const currentMaxRevision = Math.max(
+            0,
+            ...Object.values(tableRevisionRef.current).map((value) => Number(value || 0))
+          );
+          const revision = getNextRevision(currentMaxRevision);
           tableRevisionRef.current = latestTablesRef.current.reduce((acc, table) => {
             acc[table.id] = revision;
             return acc;
@@ -86,9 +96,13 @@ export default function useLiveTimersSync(tables, setTables) {
         console.error("Failed to bootstrap live timers:", error);
       } finally {
         hasBootstrappedRemoteRef.current = true;
-        if (pendingLocalSyncRef.current) {
+        if (pendingLocalSyncRef.current && didLoadRemoteSnapshot) {
           pendingLocalSyncRef.current = false;
-          const revision = Date.now();
+          const currentMaxRevision = Math.max(
+            0,
+            ...Object.values(tableRevisionRef.current).map((value) => Number(value || 0))
+          );
+          const revision = getNextRevision(currentMaxRevision);
           tableRevisionRef.current = latestTablesRef.current.reduce((acc, table) => {
             acc[table.id] = revision;
             return acc;
@@ -97,6 +111,10 @@ export default function useLiveTimersSync(tables, setTables) {
           upsertLiveTimers(latestTablesRef.current, revision).catch((error) => {
             console.error("Failed to flush pending live timer sync:", error);
           });
+        } else if (pendingLocalSyncRef.current && !didLoadRemoteSnapshot) {
+          // Keep pending=true so we do not overwrite remote state after a failed bootstrap fetch.
+          // Local edits made after bootstrap will still sync through the normal tables effect.
+          console.warn("Live timer bootstrap snapshot unavailable; skipping initial local sync flush.");
         }
       }
     };
@@ -145,7 +163,11 @@ export default function useLiveTimersSync(tables, setTables) {
     });
     if (changedTables.length === 0) return;
 
-    const revision = Date.now();
+    const maxPreviousRevisionForChanged = changedTables.reduce((maxValue, table) => {
+      const current = Number(tableRevisionRef.current[table.id] || 0);
+      return Math.max(maxValue, current);
+    }, 0);
+    const revision = getNextRevision(maxPreviousRevisionForChanged);
     tableRevisionRef.current = changedTables.reduce(
       (acc, table) => {
         acc[table.id] = revision;

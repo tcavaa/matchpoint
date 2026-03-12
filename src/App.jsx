@@ -90,8 +90,11 @@ function App() {
 
   // Save tables to local storage
   useEffect(() => {
-    // console.log("Tables Effect: Saving tables to localStorage", tables); // Optional: log for table saving
-    localStorage.setItem(LOCAL_STORAGE_TABLES_KEY, JSON.stringify(tables));
+    try {
+      localStorage.setItem(LOCAL_STORAGE_TABLES_KEY, JSON.stringify(tables));
+    } catch (e) {
+      console.error("Tables Effect: Error saving tables to localStorage:", e);
+    }
   }, [tables]);
 
   // Save history to local storage

@@ -1,5 +1,7 @@
 import { supabase, isSupabaseConfigured } from "../supabaseClient";
 
+let hasWarnedMissingGuardedRpc = false;
+
 function toLiveTimerRow(table) {
   return {
     table_id: table.id,
@@ -62,10 +64,30 @@ export async function upsertLiveTimers(tables, syncRevision = Date.now()) {
     toLiveTimerRow({ ...table, syncRevision })
   );
   if (!rows.length) return;
-  const { error } = await supabase
-    .from("live_timers")
-    .upsert(rows, { onConflict: "table_id" });
-  if (error) throw error;
+  const { error: rpcError } = await supabase.rpc("upsert_live_timers_guarded", {
+    payload: rows,
+  });
+  if (!rpcError) return;
+
+  const isMissingFunction =
+    rpcError?.code === "42883" ||
+    /upsert_live_timers_guarded/i.test(rpcError?.message || "");
+
+  if (isMissingFunction) {
+    if (!hasWarnedMissingGuardedRpc) {
+      hasWarnedMissingGuardedRpc = true;
+      console.warn(
+        "Supabase function upsert_live_timers_guarded is missing. Falling back to legacy upsert; run supabase/schema.sql for guarded sync."
+      );
+    }
+    const { error } = await supabase
+      .from("live_timers")
+      .upsert(rows, { onConflict: "table_id" });
+    if (error) throw error;
+    return;
+  }
+
+  throw rpcError;
 }
 
 export function subscribeToLiveTimerChanges(onRow) {

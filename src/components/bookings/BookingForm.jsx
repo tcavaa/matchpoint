@@ -33,12 +33,11 @@ export default function BookingForm({
         />
         <input
           type="number"
-          min="1"
+          min="0"
           step="0.5"
           value={hoursCount}
           onChange={(e) => setHoursCount(e.target.value)}
           placeholder="Number of Hours"
-          required
         />
         <input
           type="datetime-local"

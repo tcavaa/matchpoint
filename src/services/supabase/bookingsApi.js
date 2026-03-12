@@ -39,10 +39,14 @@ export async function fetchBookings() {
 
 export async function createBooking({ customerName, tablesCount, hoursCount, bookingAt }) {
   assertSupabase();
+  const normalizedHours =
+    hoursCount === null || hoursCount === undefined || hoursCount === ""
+      ? null
+      : Number(hoursCount);
   const payload = {
     customer_name: customerName,
     tables_count: Number(tablesCount),
-    hours_count: Number(hoursCount),
+    hours_count: Number.isFinite(normalizedHours) && normalizedHours > 0 ? normalizedHours : null,
     booking_at: bookingAt || null,
   };
 
