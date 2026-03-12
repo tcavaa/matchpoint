@@ -14,6 +14,7 @@ export default function BookingsPage() {
   const [bookingName, setBookingName] = useState("");
   const [tablesCount, setTablesCount] = useState("");
   const [hoursCount, setHoursCount] = useState("");
+  const [bookingDateTime, setBookingDateTime] = useState("");
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -67,6 +68,7 @@ export default function BookingsPage() {
         customerName: bookingName.trim(),
         tablesCount: Number(tablesCount),
         hoursCount: Number(hoursCount),
+        bookingAt: bookingDateTime ? new Date(bookingDateTime).toISOString() : null,
       });
       setBookings((prev) => {
         if (prev.some((b) => b.id === created.id)) return prev;
@@ -75,6 +77,7 @@ export default function BookingsPage() {
       setBookingName("");
       setTablesCount("");
       setHoursCount("");
+      setBookingDateTime("");
     } catch (error) {
       console.error("Failed to create booking:", error);
     } finally {
@@ -110,6 +113,8 @@ export default function BookingsPage() {
         setTablesCount={setTablesCount}
         hoursCount={hoursCount}
         setHoursCount={setHoursCount}
+        bookingDateTime={bookingDateTime}
+        setBookingDateTime={setBookingDateTime}
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
       />

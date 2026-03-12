@@ -7,6 +7,8 @@ export default function BookingForm({
   setTablesCount,
   hoursCount,
   setHoursCount,
+  bookingDateTime,
+  setBookingDateTime,
   onSubmit,
   isSubmitting,
 }) {
@@ -36,6 +38,12 @@ export default function BookingForm({
           value={hoursCount}
           onChange={(e) => setHoursCount(e.target.value)}
           placeholder="Number of Hours"
+          required
+        />
+        <input
+          type="datetime-local"
+          value={bookingDateTime}
+          onChange={(e) => setBookingDateTime(e.target.value)}
           required
         />
         <button className="admin-btn admin-btn-primary" type="submit" disabled={isSubmitting}>

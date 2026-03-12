@@ -12,6 +12,7 @@ function normalizeBooking(row) {
     ...row,
     is_done: Boolean(row?.is_done),
     done_at: row?.done_at ?? null,
+    booking_at: row?.booking_at ?? null,
   };
 }
 
@@ -19,7 +20,7 @@ export async function fetchBookings() {
   assertSupabase();
   const baseQuery = supabase
     .from("bookings")
-    .select("id, customer_name, tables_count, hours_count, is_done, done_at, created_at")
+    .select("id, customer_name, tables_count, hours_count, booking_at, is_done, done_at, created_at")
     .order("created_at", { ascending: false });
 
   // Main path: active bookings where done is false (or null for older rows)
@@ -36,18 +37,19 @@ export async function fetchBookings() {
   return (fallback.data || []).map(normalizeBooking);
 }
 
-export async function createBooking({ customerName, tablesCount, hoursCount }) {
+export async function createBooking({ customerName, tablesCount, hoursCount, bookingAt }) {
   assertSupabase();
   const payload = {
     customer_name: customerName,
     tables_count: Number(tablesCount),
     hours_count: Number(hoursCount),
+    booking_at: bookingAt || null,
   };
 
   const primary = await supabase
     .from("bookings")
     .insert(payload)
-    .select("id, customer_name, tables_count, hours_count, is_done, done_at, created_at")
+    .select("id, customer_name, tables_count, hours_count, booking_at, is_done, done_at, created_at")
     .single();
 
   if (!primary.error) {
@@ -73,7 +75,7 @@ export async function markBookingAsDone(id) {
     .from("bookings")
     .update({ is_done: true, done_at: new Date().toISOString() })
     .eq("id", id)
-    .select("id, customer_name, tables_count, hours_count, is_done, done_at, created_at")
+    .select("id, customer_name, tables_count, hours_count, booking_at, is_done, done_at, created_at")
     .single();
 
   if (!primary.error) {

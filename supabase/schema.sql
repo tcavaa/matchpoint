@@ -52,6 +52,7 @@ create table if not exists public.bookings (
   customer_name text not null,
   tables_count integer not null check (tables_count > 0),
   hours_count numeric not null check (hours_count > 0),
+  booking_at timestamptz null,
   is_done boolean not null default false,
   done_at timestamptz null,
   created_at timestamptz not null default now()
@@ -127,4 +128,7 @@ add column if not exists is_done boolean not null default false;
 
 alter table public.bookings
 add column if not exists done_at timestamptz null;
+
+alter table public.bookings
+add column if not exists booking_at timestamptz null;
 

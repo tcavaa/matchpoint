@@ -20,7 +20,7 @@ export default function BookingList({ bookings, isLoading, onMarkDone, onDelete 
             {booking.tables_count} table(s) • {booking.hours_count} hour(s)
           </div>
           <div className="booking-time">
-            {new Date(booking.created_at).toLocaleString()}
+            {new Date(booking.booking_at || booking.created_at).toLocaleString()}
           </div>
           <div className="booking-actions">
             <button
