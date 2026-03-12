@@ -59,6 +59,7 @@ export default function useLiveTimersSync(tables, setTables) {
   useEffect(() => {
     let isCancelled = false;
     let didLoadRemoteSnapshot = false;
+    let shouldSeedFromLocal = false;
 
     const bootstrapLiveTimers = async () => {
       try {
@@ -68,6 +69,7 @@ export default function useLiveTimersSync(tables, setTables) {
 
         if (remoteTables.length > 0) {
           isApplyingRemoteSyncRef.current = true;
+          shouldSeedFromLocal = false;
           tableRevisionRef.current = remoteTables.reduce((acc, table) => {
             acc[table.id] = Number(table.syncRevision || 0);
             return acc;
@@ -80,6 +82,7 @@ export default function useLiveTimersSync(tables, setTables) {
             })
           );
         } else {
+          shouldSeedFromLocal = true;
           const currentMaxRevision = Math.max(
             0,
             ...Object.values(tableRevisionRef.current).map((value) => Number(value || 0))
@@ -96,7 +99,7 @@ export default function useLiveTimersSync(tables, setTables) {
         console.error("Failed to bootstrap live timers:", error);
       } finally {
         hasBootstrappedRemoteRef.current = true;
-        if (pendingLocalSyncRef.current && didLoadRemoteSnapshot) {
+        if (pendingLocalSyncRef.current && didLoadRemoteSnapshot && shouldSeedFromLocal) {
           pendingLocalSyncRef.current = false;
           const currentMaxRevision = Math.max(
             0,
@@ -111,6 +114,9 @@ export default function useLiveTimersSync(tables, setTables) {
           upsertLiveTimers(latestTablesRef.current, revision).catch((error) => {
             console.error("Failed to flush pending live timer sync:", error);
           });
+        } else if (didLoadRemoteSnapshot && !shouldSeedFromLocal) {
+          // Remote snapshot exists; never flush local bootstrap state over it.
+          pendingLocalSyncRef.current = false;
         } else if (pendingLocalSyncRef.current && !didLoadRemoteSnapshot) {
           // Keep pending=true so we do not overwrite remote state after a failed bootstrap fetch.
           // Local edits made after bootstrap will still sync through the normal tables effect.
@@ -148,7 +154,13 @@ export default function useLiveTimersSync(tables, setTables) {
 
   useEffect(() => {
     if (!hasBootstrappedRemoteRef.current) {
-      pendingLocalSyncRef.current = true;
+      const changedBeforeBootstrap = tables.some((table) => {
+        const previous = lastSentTablesRef.current.find((t) => t.id === table.id);
+        return hasSyncRelevantDifference(previous, table);
+      });
+      if (changedBeforeBootstrap) {
+        pendingLocalSyncRef.current = true;
+      }
       return;
     }
     if (isApplyingRemoteSyncRef.current) {
