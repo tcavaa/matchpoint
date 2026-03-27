@@ -22,7 +22,9 @@ export function getTableCardViewModel(table, hourlyRate, sales) {
     fitPass,
     gameType,
     hourlyRate: customHourlyRate,
+    extraEquipment,
   } = table;
+  const equipmentBonus = extraEquipment ? 5 : 0;
 
   let displayTimeSeconds = 0;
   let currentCost = "0.00";
@@ -46,7 +48,7 @@ export function getTableCardViewModel(table, hourlyRate, sales) {
       const ratePerSecond = 6 / (30 * 60);
       sessionCost = ((initialCountdownSeconds || 0) * ratePerSecond).toFixed(2);
     } else if (hasCustomRate) {
-      const ratePerSecond = customHourlyRate / 3600;
+      const ratePerSecond = (customHourlyRate + equipmentBonus) / 3600;
       sessionCost = ((initialCountdownSeconds || 0) * ratePerSecond).toFixed(2);
     } else {
       const startMs = sessionStartTime || Date.now();
@@ -54,10 +56,10 @@ export function getTableCardViewModel(table, hourlyRate, sales) {
       sessionCost = calculateSegmentedPrice({
         startTimeMs: startMs,
         endTimeMs: endMs,
-        hourlyRate,
+        hourlyRate: hourlyRate + equipmentBonus,
         saleFromHour: sales.saleFromHour,
         saleToHour: sales.saleToHour,
-        saleHourlyRate: sales.saleHourlyRate,
+        saleHourlyRate: sales.saleHourlyRate + equipmentBonus,
       });
     }
     currentCost = sessionCost;
@@ -74,7 +76,7 @@ export function getTableCardViewModel(table, hourlyRate, sales) {
       const ratePerSecond = 6 / (30 * 60);
       currentCost = (displayTimeSeconds * ratePerSecond).toFixed(2);
     } else if (hasCustomRate) {
-      const ratePerSecond = customHourlyRate / 3600;
+      const ratePerSecond = (customHourlyRate + equipmentBonus) / 3600;
       currentCost = (displayTimeSeconds * ratePerSecond).toFixed(2);
     } else {
       const startMs = sessionStartTime || Date.now() - displayTimeSeconds * 1000;
@@ -82,10 +84,10 @@ export function getTableCardViewModel(table, hourlyRate, sales) {
       currentCost = calculateSegmentedPrice({
         startTimeMs: startMs,
         endTimeMs: endMs,
-        hourlyRate,
+        hourlyRate: hourlyRate + equipmentBonus,
         saleFromHour: sales.saleFromHour,
         saleToHour: sales.saleToHour,
-        saleHourlyRate: sales.saleHourlyRate,
+        saleHourlyRate: sales.saleHourlyRate + equipmentBonus,
       });
     }
     sessionCost = currentCost;
