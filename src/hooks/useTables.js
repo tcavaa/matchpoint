@@ -64,6 +64,7 @@ export default function useTables() {
                 sessionStartTime: Date.now(),
                 sessionEndTime: null,
                 fitPass: !!options.fitPass,
+                extraEquipment: !!options.extraEquipment,
               };
             } else {
               // Standard mode
@@ -79,6 +80,7 @@ export default function useTables() {
                 sessionStartTime: table.sessionStartTime ?? Date.now(),
                 sessionEndTime: null,
                 fitPass: !!options.fitPass,
+                extraEquipment: !!options.extraEquipment,
               };
             }
           }

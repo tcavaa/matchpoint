@@ -7,6 +7,7 @@ export default function StartModalContentFields({
   durationMinutes,
   setDurationMinutes,
   isPlayStation,
+  isPingPong,
   isCustomTimer,
   customName,
   setCustomName,
@@ -15,6 +16,8 @@ export default function StartModalContentFields({
   isFoosOrHockey,
   fitPass,
   setFitPass,
+  extraEquipment,
+  setExtraEquipment,
   validationError,
 }) {
   return (
@@ -55,8 +58,32 @@ export default function StartModalContentFields({
         </div>
       )}
       {isPlayStation && (
-        <div className="duration-input" style={{ marginTop: 8, opacity: 0.9 }}>
-          Pricing: 20 GEL per hour
+        <>
+          <div className="duration-input" style={{ marginTop: 8, opacity: 0.9 }}>
+            Pricing: {extraEquipment ? 25 : 20} GEL per hour
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <label>
+              <input
+                type="checkbox"
+                checked={extraEquipment}
+                onChange={(e) => setExtraEquipment(e.target.checked)}
+              />
+              &nbsp;+2 Controllers (+5 GEL/hour)
+            </label>
+          </div>
+        </>
+      )}
+      {isPingPong && (
+        <div style={{ marginTop: 12 }}>
+          <label>
+            <input
+              type="checkbox"
+              checked={extraEquipment}
+              onChange={(e) => setExtraEquipment(e.target.checked)}
+            />
+            &nbsp;+2 Rackets (+5 GEL/hour)
+          </label>
         </div>
       )}
       {isCustomTimer && (

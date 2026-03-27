@@ -13,7 +13,9 @@ export default function BookingList({ bookings, isLoading, onMarkDone, onDelete 
       {!isLoading && bookings.length === 0 && (
         <p className="booking-empty">No bookings yet.</p>
       )}
-      {bookings.map((booking) => (
+      {[...bookings]
+        .sort((a, b) => new Date(a.booking_at || a.created_at) - new Date(b.booking_at || b.created_at))
+        .map((booking) => (
         <div className="booking-row" key={booking.id}>
           <div className="booking-name">{booking.customer_name}</div>
           <div className="booking-meta">
@@ -21,7 +23,7 @@ export default function BookingList({ bookings, isLoading, onMarkDone, onDelete 
             {booking.hours_count ? ` • ${booking.hours_count} hour(s)` : ""}
           </div>
           <div className="booking-time">
-            {new Date(booking.booking_at || booking.created_at).toLocaleString()}
+            <strong>{new Date(booking.booking_at || booking.created_at).toLocaleString()}</strong>
           </div>
           <div className="booking-actions">
             <button

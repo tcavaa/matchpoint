@@ -7,9 +7,11 @@ const StartModal = ({ table, isOpen, onClose, onStart }) => {
   const isFoosOrHockey = table?.gameType === 'foosball' || table?.gameType === 'airhockey';
   const isPlayStation = table?.gameType === "playstation";
   const isCustomTimer = table?.gameType === "custom";
+  const isPingPong = table?.gameType === "pingpong";
   const [mode, setMode] = useState("countdown"); // 'standard' or 'countdown'
   const [durationMinutes, setDurationMinutes] = useState(60);
   const [fitPass, setFitPass] = useState(false);
+  const [extraEquipment, setExtraEquipment] = useState(false);
   const [customName, setCustomName] = useState("");
   const [customHourlyRate, setCustomHourlyRate] = useState("");
   const [validationError, setValidationError] = useState("");
@@ -19,6 +21,7 @@ const StartModal = ({ table, isOpen, onClose, onStart }) => {
     setMode("countdown");
     setDurationMinutes(60);
     setFitPass(false);
+    setExtraEquipment(false);
     setCustomName(isCustomTimer ? (table.name === "Blank Timer" ? "" : table.name || "") : table.name || "");
     setCustomHourlyRate(
       typeof table.hourlyRate === "number" && table.hourlyRate > 0
@@ -59,6 +62,7 @@ const StartModal = ({ table, isOpen, onClose, onStart }) => {
       mode === "countdown" ? parseInt(durationMinutes, 10) : null,
       {
         fitPass: isFoosOrHockey || isPlayStation || isCustomTimer ? false : fitPass,
+        extraEquipment: (isPingPong || isPlayStation) ? extraEquipment : false,
         ...customOptions,
       }
     );
@@ -76,6 +80,7 @@ const StartModal = ({ table, isOpen, onClose, onStart }) => {
           durationMinutes={durationMinutes}
           setDurationMinutes={setDurationMinutes}
           isPlayStation={isPlayStation}
+          isPingPong={isPingPong}
           isCustomTimer={isCustomTimer}
           customName={customName}
           setCustomName={setCustomName}
@@ -84,6 +89,8 @@ const StartModal = ({ table, isOpen, onClose, onStart }) => {
           isFoosOrHockey={isFoosOrHockey}
           fitPass={fitPass}
           setFitPass={setFitPass}
+          extraEquipment={extraEquipment}
+          setExtraEquipment={setExtraEquipment}
           validationError={validationError}
         />
 
