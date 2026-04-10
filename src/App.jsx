@@ -1,14 +1,18 @@
 // src/App.jsx
 import React, { useState, useEffect, Suspense } from "react";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from "react-router-dom";
 import StartModal from "./components/StartModal";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import SalesSettingsPage from "./pages/SalesSettingsPage";
 import MenuAdminPage from "./pages/MenuAdminPage";
 import BookingsPage from "./pages/BookingsPage";
+import BookingPublicPage from "./pages/BookingPublicPage";
+import BookingSuccessPage from "./pages/BookingSuccessPage";
+import BookingCancelledPage from "./pages/BookingCancelledPage";
 import GlobalSoundButtons from "./components/GlobalSoundButtons";
 import HomeDashboard from "./components/HomeDashboard";
 import BookingNotifications from "./components/BookingNotifications";
+import AdminAuthGate, { AdminLogoutButton } from "./components/admin/AdminAuthGate";
 import useCart from "./hooks/useCart";
 import useTables from "./hooks/useTables";
 import useBookingNotifications from "./hooks/useBookingNotifications";
@@ -16,34 +20,32 @@ import useActiveBookingsCount from "./hooks/useActiveBookingsCount";
 import { playTableEndSound } from "./utils/utils";
 import "./App.css";
 import "./components/BookingNotifications.css";
-// App.jsx
 import { HOURLY_RATE, LOCAL_STORAGE_TABLES_KEY, LOCAL_STORAGE_HISTORY_KEY } from './config';
 
-function App() {
-  const [_, setTick] = useState(0); // To force re-render for running timers
+// ─── Staff portal (all internal pages, password-protected) ────────────────────
+function StaffPortal() {
+  const [_, setTick] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { notifications, dismissNotification } = useBookingNotifications();
   const activeBookingsCount = useActiveBookingsCount();
   const { cart, addToCart, incrementQuantity, decrementQuantity, removeItem, calculateTotal, handleSubmit } = useCart();
-  const { 
-    tables, 
-    setTables, 
-    sessionHistory, 
-    showModalForTableId,  
-    openStartModal, 
-    closeStartModal, 
-    handleToggleAvailability, 
-    handleStartTimer, 
-    handleStopTimer, 
-    handlePayAndClear, 
-    handleTransferTimer
+  const {
+    tables,
+    setTables,
+    sessionHistory,
+    showModalForTableId,
+    openStartModal,
+    closeStartModal,
+    handleToggleAvailability,
+    handleStartTimer,
+    handleStopTimer,
+    handlePayAndClear,
+    handleTransferTimer,
   } = useTables();
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(prev => !prev);
-  };
-  
-  // Interval to update running timers and check for countdown completion
+  const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
+
+  // Tick every second to update running timers
   useEffect(() => {
     const intervalId = setInterval(() => {
       let needsVisualUpdate = false;
@@ -88,7 +90,6 @@ function App() {
     return () => clearInterval(intervalId);
   }, [setTables]);
 
-  // Save tables to local storage
   useEffect(() => {
     try {
       localStorage.setItem(LOCAL_STORAGE_TABLES_KEY, JSON.stringify(tables));
@@ -97,112 +98,125 @@ function App() {
     }
   }, [tables]);
 
-  // Save history to local storage
   useEffect(() => {
-    console.log(
-      "SessionHistory Effect: Attempting to save history. Current state:",
-      sessionHistory
-    );
     try {
-      localStorage.setItem(
-        LOCAL_STORAGE_HISTORY_KEY,
-        JSON.stringify(sessionHistory)
-      );
-      console.log(
-        "SessionHistory Effect: Successfully saved to localStorage. Key:",
-        LOCAL_STORAGE_HISTORY_KEY
-      );
+      localStorage.setItem(LOCAL_STORAGE_HISTORY_KEY, JSON.stringify(sessionHistory));
     } catch (e) {
-      console.error(
-        "SessionHistory Effect: Error saving history to localStorage:",
-        e
-      );
+      console.error("SessionHistory Effect: Error saving history to localStorage:", e);
     }
   }, [sessionHistory]);
 
   const tableForModal = tables.find((t) => t.id === showModalForTableId);
 
   return (
-    <Router>
-      <div className="app">
-        <header className="app-header">
-          <Link className="logo" to=''>
-            <h1>
-              <img src="/matchpoint-logo.png" alt="MatchPoint logo" className="header-logo-image" />
-              MatchPoint Table Manager
-            </h1>
+    <div className="app">
+      <header className="app-header">
+        <Link className="logo" to="/">
+          <h1>
+            <img src="/matchpoint-logo.png" alt="MatchPoint logo" className="header-logo-image" />
+            MatchPoint Table Manager
+          </h1>
+        </Link>
+        <div className="nav-container">
+          <Link className="nav-link" to="/admin/menu">Manage Bar</Link>
+          <Link className="nav-link nav-link-with-badge" to="/admin/bookings">
+            Bookings
+            {activeBookingsCount > 0 && (
+              <span className="booking-count-badge">{activeBookingsCount}</span>
+            )}
           </Link>
-          <div className="nav-container">
-            <Link className="nav-link" to='/admin/menu'>Manage Bar</Link>
-            <Link className="nav-link nav-link-with-badge" to='/admin/bookings'>
-              Bookings
-              {activeBookingsCount > 0 && (
-                <span className="booking-count-badge">{activeBookingsCount}</span>
-              )}
-            </Link>
-            <Link className="nav-link" to='/admin/sales'>Sale Settings</Link>
-            <Link className="nav-link home-link" to='/'>Home</Link>
-            <button
-              onClick={toggleSidebar}
-              className="sidebar-toggle-btn"
-            >
-              
-              {isSidebarOpen ? "Close Bar" : "Open Bar"}
-            </button>
-          </div>
-        </header>
-        <main className="main-content">
-          <BookingNotifications notifications={notifications} onDismiss={dismissNotification} />
-          <GlobalSoundButtons />
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <HomeDashboard
-                  tables={tables}
-                  openStartModal={openStartModal}
-                  handleStopTimer={handleStopTimer}
-                  handlePayAndClear={handlePayAndClear}
-                  handleToggleAvailability={handleToggleAvailability}
-                  handleTransferTimer={handleTransferTimer}
-                  isSidebarOpen={isSidebarOpen}
-                  cart={cart}
-                  incrementQuantity={incrementQuantity}
-                  decrementQuantity={decrementQuantity}
-                  removeItem={removeItem}
-                  calculateTotal={calculateTotal}
-                  handleSubmit={handleSubmit}
-                  addToCart={addToCart}
-                  toggleSidebar={toggleSidebar}
-                  sessionHistory={sessionHistory}
-                />
-              }
-            />
-            <Route
-              path="/analytics"
-              element={
-                <Suspense fallback={<div>Loading Analytics..</div>}>
-                  <AnalyticsPage />
-                </Suspense>
-              }
-            />
-            <Route path="/admin/sales" element={<SalesSettingsPage />} />
-            <Route path="/admin/menu" element={<MenuAdminPage />} />
-            <Route path="/admin/bookings" element={<BookingsPage />} />
-          </Routes>
-        </main>
-        {tableForModal && (
-          <StartModal
-            table={tableForModal}
-            isOpen={!!showModalForTableId}
-            onClose={closeStartModal}
-            onStart={handleStartTimer}
+          <Link className="nav-link" to="/admin/sales">Sale Settings</Link>
+          <Link className="nav-link home-link" to="/">Home</Link>
+          <button onClick={toggleSidebar} className="sidebar-toggle-btn">
+            {isSidebarOpen ? "Close Bar" : "Open Bar"}
+          </button>
+          <AdminLogoutButton />
+        </div>
+      </header>
+
+      <main className="main-content">
+        <BookingNotifications notifications={notifications} onDismiss={dismissNotification} />
+        <GlobalSoundButtons />
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <HomeDashboard
+                tables={tables}
+                openStartModal={openStartModal}
+                handleStopTimer={handleStopTimer}
+                handlePayAndClear={handlePayAndClear}
+                handleToggleAvailability={handleToggleAvailability}
+                handleTransferTimer={handleTransferTimer}
+                isSidebarOpen={isSidebarOpen}
+                cart={cart}
+                incrementQuantity={incrementQuantity}
+                decrementQuantity={decrementQuantity}
+                removeItem={removeItem}
+                calculateTotal={calculateTotal}
+                handleSubmit={handleSubmit}
+                addToCart={addToCart}
+                toggleSidebar={toggleSidebar}
+                sessionHistory={sessionHistory}
+              />
+            }
           />
-        )}
-        <footer className="app-footer">
-          <p>Hourly Rate: {HOURLY_RATE} GEL</p>
-        </footer>
-      </div>
+          <Route
+            path="/analytics"
+            element={
+              <Suspense fallback={<div>Loading Analytics…</div>}>
+                <AnalyticsPage />
+              </Suspense>
+            }
+          />
+          <Route path="/admin/sales" element={<SalesSettingsPage />} />
+          <Route path="/admin/menu" element={<MenuAdminPage />} />
+          <Route path="/admin/bookings" element={<BookingsPage />} />
+        </Routes>
+      </main>
+
+      {tableForModal && (
+        <StartModal
+          table={tableForModal}
+          isOpen={!!showModalForTableId}
+          onClose={closeStartModal}
+          onStart={handleStartTimer}
+        />
+      )}
+
+      <footer className="app-footer">
+        <p>Hourly Rate: {HOURLY_RATE} GEL</p>
+      </footer>
+    </div>
+  );
+}
+
+// ─── Root router — splits public booking flow from staff portal ───────────────
+function AppContent() {
+  const location = useLocation();
+  const isPublicRoute = location.pathname.startsWith("/book");
+
+  if (isPublicRoute) {
+    return (
+      <Routes>
+        <Route path="/book" element={<BookingPublicPage />} />
+        <Route path="/book/success" element={<BookingSuccessPage />} />
+        <Route path="/book/cancelled" element={<BookingCancelledPage />} />
+      </Routes>
+    );
+  }
+
+  return (
+    <AdminAuthGate>
+      <StaffPortal />
+    </AdminAuthGate>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AppContent />
     </Router>
   );
 }
