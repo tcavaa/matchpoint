@@ -2,10 +2,10 @@ import { TABLE_COUNT } from "../config";
 
 function getDefaultTableById(id) {
   const defaults = {
-    9: { name: "Foosball", gameType: "foosball", hourlyRate: null },
-    10: { name: "Air hockey", gameType: "airhockey", hourlyRate: null },
-    11: { name: "PlayStation", gameType: "playstation", hourlyRate: 20 },
-    12: { name: "Blank Timer", gameType: "custom", hourlyRate: null },
+    11: { name: "Foosball", gameType: "foosball", hourlyRate: null },
+    12: { name: "Air hockey", gameType: "airhockey", hourlyRate: null },
+    13: { name: "PlayStation", gameType: "playstation", hourlyRate: 20 },
+    14: { name: "Blank Timer", gameType: "custom", hourlyRate: null },
   };
   const special = defaults[id] || { name: `Table ${id}`, gameType: "pingpong" };
   return {
