@@ -70,7 +70,7 @@ function createSpecialTable(id, name, gameType, hourlyRate = null) {
 }
 
 function enforceGameTableOrder(normalized) {
-  const pingpong = normalized.filter((t) => t.gameType === "pingpong").slice(0, 8);
+  const pingpong = normalized.filter((t) => t.gameType === "pingpong").slice(0, 10);
   const foos = normalized.find((t) => t.gameType === "foosball");
   const hockey = normalized.find((t) => t.gameType === "airhockey");
   const playstation = normalized.find((t) => t.gameType === "playstation");
