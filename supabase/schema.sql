@@ -52,6 +52,7 @@ create table if not exists public.bookings (
   customer_name text not null,
   tables_count integer not null check (tables_count > 0),
   hours_count numeric null check (hours_count is null or hours_count > 0),
+  table_ids integer[] not null default '{}',
   booking_at timestamptz null,
   is_done boolean not null default false,
   done_at timestamptz null,
@@ -222,4 +223,7 @@ $$;
 alter table public.bookings
 add constraint bookings_hours_count_check
 check (hours_count is null or hours_count > 0);
+
+alter table public.bookings
+add column if not exists table_ids integer[] not null default '{}';
 

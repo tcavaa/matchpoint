@@ -12,9 +12,9 @@ import "./BookingsPage.css";
 
 export default function BookingsPage() {
   const [bookingName, setBookingName] = useState("");
-  const [tablesCount, setTablesCount] = useState("");
   const [hoursCount, setHoursCount] = useState("");
   const [bookingDateTime, setBookingDateTime] = useState("");
+  const [selectedTableIds, setSelectedTableIds] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,18 +66,19 @@ export default function BookingsPage() {
       setIsSubmitting(true);
       const created = await createBooking({
         customerName: bookingName.trim(),
-        tablesCount: Number(tablesCount),
+        tablesCount: selectedTableIds.length || 1,
         hoursCount: hoursCount === "" ? null : Number(hoursCount),
         bookingAt: bookingDateTime ? new Date(bookingDateTime).toISOString() : null,
+        tableIds: selectedTableIds,
       });
       setBookings((prev) => {
         if (prev.some((b) => b.id === created.id)) return prev;
         return [created, ...prev];
       });
       setBookingName("");
-      setTablesCount("");
       setHoursCount("");
       setBookingDateTime("");
+      setSelectedTableIds([]);
     } catch (error) {
       console.error("Failed to create booking:", error);
     } finally {
@@ -109,12 +110,12 @@ export default function BookingsPage() {
       <BookingForm
         bookingName={bookingName}
         setBookingName={setBookingName}
-        tablesCount={tablesCount}
-        setTablesCount={setTablesCount}
         hoursCount={hoursCount}
         setHoursCount={setHoursCount}
         bookingDateTime={bookingDateTime}
         setBookingDateTime={setBookingDateTime}
+        selectedTableIds={selectedTableIds}
+        setSelectedTableIds={setSelectedTableIds}
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
       />
@@ -127,4 +128,3 @@ export default function BookingsPage() {
     </div>
   );
 }
-
