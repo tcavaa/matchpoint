@@ -6,9 +6,12 @@ import AnalyticsPage from "./pages/AnalyticsPage";
 import SalesSettingsPage from "./pages/SalesSettingsPage";
 import MenuAdminPage from "./pages/MenuAdminPage";
 import BookingsPage from "./pages/BookingsPage";
+import TableViewPage from "./pages/TableViewPage";
+import "./pages/MenuAdminPage.css";
 import GlobalSoundButtons from "./components/GlobalSoundButtons";
 import HomeDashboard from "./components/HomeDashboard";
 import BookingNotifications from "./components/BookingNotifications";
+import HeaderNav from "./components/HeaderNav";
 import useCart from "./hooks/useCart";
 import useTables from "./hooks/useTables";
 import useBookingNotifications from "./hooks/useBookingNotifications";
@@ -132,24 +135,11 @@ function App() {
               MatchPoint Table Manager
             </h1>
           </Link>
-          <div className="nav-container">
-            <Link className="nav-link" to='/admin/menu'>Manage Bar</Link>
-            <Link className="nav-link nav-link-with-badge" to='/admin/bookings'>
-              Bookings
-              {activeBookingsCount > 0 && (
-                <span className="booking-count-badge">{activeBookingsCount}</span>
-              )}
-            </Link>
-            <Link className="nav-link" to='/admin/sales'>Sale Settings</Link>
-            <Link className="nav-link home-link" to='/'>Home</Link>
-            <button
-              onClick={toggleSidebar}
-              className="sidebar-toggle-btn"
-            >
-              
-              {isSidebarOpen ? "Close Bar" : "Open Bar"}
-            </button>
-          </div>
+          <HeaderNav
+            activeBookingsCount={activeBookingsCount}
+            isSidebarOpen={isSidebarOpen}
+            onToggleSidebar={toggleSidebar}
+          />
         </header>
         <main className="main-content">
           <BookingNotifications notifications={notifications} onDismiss={dismissNotification} />
@@ -189,6 +179,7 @@ function App() {
             <Route path="/admin/sales" element={<SalesSettingsPage />} />
             <Route path="/admin/menu" element={<MenuAdminPage />} />
             <Route path="/admin/bookings" element={<BookingsPage />} />
+            <Route path="/table-view" element={<TableViewPage tables={tables} />} />
           </Routes>
         </main>
         {tableForModal && (

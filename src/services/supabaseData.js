@@ -17,6 +17,7 @@ export {
 export {
   fetchBookings,
   createBooking,
+  updateBooking,
   markBookingAsDone,
   deleteBooking,
   fetchActiveBookingsCount,
