@@ -1,4 +1,4 @@
-import { TABLE_COUNT } from "../config";
+import { getBranchConfig, DEFAULT_BRANCH } from "../branches";
 
 const PING_PONG_COUNT = 10;
 const FOOSBALL_ID = 11;
@@ -13,8 +13,9 @@ const SPECIAL_DEFAULTS = {
   [CUSTOM_ID]: { name: "Blank Timer", gameType: "custom", hourlyRate: null },
 };
 
-function getDefaultTableById(id) {
-  const special = SPECIAL_DEFAULTS[id] || { name: `Table ${id}`, gameType: "pingpong" };
+function getDefaultTableById(id, pingPongOnly = false) {
+  // Ping-pong-only branches never get the special game tables.
+  const special = (!pingPongOnly && SPECIAL_DEFAULTS[id]) || { name: `Table ${id}`, gameType: "pingpong" };
   return {
     id,
     name: special.name,
@@ -90,25 +91,37 @@ function normalizeStoredTables(parsedTables) {
   }));
 }
 
-// Fills in any MISSING ids in [1..TABLE_COUNT] with sensible defaults.
+// Fills in any MISSING ids in [1..tableCount] with sensible defaults.
 // Looking at id presence (not array length) prevents duplicates and
 // recovers tables that were dropped by an earlier broken slice/migration.
-function ensureTableCountWithDefaults(normalized) {
+function ensureTableCountWithDefaults(normalized, cfg) {
   const byId = new Map();
   normalized.forEach((t) => {
     if (t && typeof t.id === "number" && !byId.has(t.id)) {
       byId.set(t.id, t);
     }
   });
-  for (let id = 1; id <= TABLE_COUNT; id++) {
+  for (let id = 1; id <= cfg.tableCount; id++) {
     if (!byId.has(id)) {
-      byId.set(id, getDefaultTableById(id));
+      byId.set(id, getDefaultTableById(id, cfg.pingPongOnly));
     }
   }
   return Array.from(byId.values());
 }
 
-function enforceGameTableOrder(normalized) {
+function enforcePingPongOnlyOrder(normalized, cfg) {
+  const pingpong = normalized
+    .filter((t) => t.gameType === "pingpong")
+    .sort((a, b) => a.id - b.id)
+    .slice(0, cfg.tableCount);
+  const rebuilt = [...pingpong];
+  while (rebuilt.length < cfg.tableCount) {
+    rebuilt.push(getDefaultTableById(rebuilt.length + 1, true));
+  }
+  return rebuilt.slice(0, cfg.tableCount);
+}
+
+function enforceFullGameTableOrder(normalized, cfg) {
   const pingpong = normalized
     .filter((t) => t.gameType === "pingpong")
     .sort((a, b) => a.id - b.id)
@@ -124,29 +137,39 @@ function enforceGameTableOrder(normalized) {
   if (playstation) rebuilt.push(playstation);
   if (custom) rebuilt.push(custom);
 
-  if (!foos && rebuilt.length < TABLE_COUNT) {
+  if (!foos && rebuilt.length < cfg.tableCount) {
     rebuilt.push(getDefaultTableById(FOOSBALL_ID));
   }
-  if (!hockey && rebuilt.length < TABLE_COUNT) {
+  if (!hockey && rebuilt.length < cfg.tableCount) {
     rebuilt.push(getDefaultTableById(AIR_HOCKEY_ID));
   }
-  if (!playstation && rebuilt.length < TABLE_COUNT) {
+  if (!playstation && rebuilt.length < cfg.tableCount) {
     rebuilt.push(getDefaultTableById(PLAYSTATION_ID));
   }
-  if (!custom && rebuilt.length < TABLE_COUNT) {
+  if (!custom && rebuilt.length < cfg.tableCount) {
     rebuilt.push(getDefaultTableById(CUSTOM_ID));
   }
 
-  return rebuilt.slice(0, TABLE_COUNT);
+  return rebuilt.slice(0, cfg.tableCount);
 }
 
-export function buildInitialDefaultTables() {
-  return Array.from({ length: TABLE_COUNT }, (_, i) => getDefaultTableById(i + 1));
+function enforceGameTableOrder(normalized, cfg) {
+  return cfg.pingPongOnly
+    ? enforcePingPongOnlyOrder(normalized, cfg)
+    : enforceFullGameTableOrder(normalized, cfg);
 }
 
-export function buildTablesFromStorage(parsedTables) {
-  const remapped = remapLegacySpecialIds(parsedTables);
+export function buildInitialDefaultTables(branch = DEFAULT_BRANCH) {
+  const cfg = getBranchConfig(branch);
+  return Array.from({ length: cfg.tableCount }, (_, i) =>
+    getDefaultTableById(i + 1, cfg.pingPongOnly)
+  );
+}
+
+export function buildTablesFromStorage(parsedTables, branch = DEFAULT_BRANCH) {
+  const cfg = getBranchConfig(branch);
+  const remapped = cfg.pingPongOnly ? parsedTables : remapLegacySpecialIds(parsedTables);
   const normalized = normalizeStoredTables(remapped);
-  const expanded = ensureTableCountWithDefaults(normalized);
-  return enforceGameTableOrder(expanded);
+  const expanded = ensureTableCountWithDefaults(normalized, cfg);
+  return enforceGameTableOrder(expanded, cfg);
 }

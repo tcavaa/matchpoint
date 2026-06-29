@@ -11,12 +11,13 @@ import {
   getFinalElapsedTimeInSeconds,
 } from "../utils/tableBilling";
 import { HOURLY_RATE, LOCAL_STORAGE_SALES_SETTINGS_KEY } from '../config';
+import { getActiveBranch } from "../branches";
 
-export default function useTables() {
-    const [tables, setTables] = useState(initializeTables);
-    const [sessionHistory, setSessionHistory] = useState(initializeHistory);
+export default function useTables(branch = getActiveBranch()) {
+    const [tables, setTables] = useState(() => initializeTables(branch));
+    const [sessionHistory, setSessionHistory] = useState(() => initializeHistory(branch));
     const [showModalForTableId, setShowModalForTableId] = useState(null);
-    useLiveTimersSync(tables, setTables);
+    useLiveTimersSync(tables, setTables, branch);
 
     const openStartModal = useCallback((tableId) => {
         setShowModalForTableId(tableId);
@@ -170,7 +171,7 @@ export default function useTables() {
         return updatedHistory;
       });
 
-      createSessionHistoryRecord(newSessionDetails).catch((error) => {
+      createSessionHistoryRecord(newSessionDetails, branch).catch((error) => {
         console.error("Failed to save session history to Supabase:", error);
       });
     },
@@ -178,6 +179,7 @@ export default function useTables() {
       tables,
       setTables,
       setSessionHistory,
+      branch,
     ]
   );
 

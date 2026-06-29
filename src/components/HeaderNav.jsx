@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
-const OTHER_PATHS = ["/admin/menu", "/table-view", "/admin/sales"];
-
 export default function HeaderNav({
+  basePath = "",
   activeBookingsCount,
   isSidebarOpen,
   onToggleSidebar,
@@ -11,6 +10,13 @@ export default function HeaderNav({
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const moreRef = useRef(null);
   const location = useLocation();
+
+  const homePath = basePath || "/";
+  const otherPaths = [
+    `${basePath}/admin/menu`,
+    `${basePath}/table-view`,
+    `${basePath}/admin/sales`,
+  ];
 
   useEffect(() => {
     const handler = (event) => {
@@ -31,9 +37,9 @@ export default function HeaderNav({
     setIsMoreOpen(false);
   }, [location.pathname]);
 
-  const isOtherActive = OTHER_PATHS.some((p) => location.pathname.startsWith(p));
-  const isHomeActive = location.pathname === "/";
-  const isBookingsActive = location.pathname.startsWith("/admin/bookings");
+  const isOtherActive = otherPaths.some((p) => location.pathname.startsWith(p));
+  const isHomeActive = location.pathname === homePath;
+  const isBookingsActive = location.pathname.startsWith(`${basePath}/admin/bookings`);
 
   const closeMore = () => setIsMoreOpen(false);
 
@@ -42,7 +48,7 @@ export default function HeaderNav({
       <nav className="header-nav" aria-label="Main navigation">
         <Link
           className={`header-nav-item ${isHomeActive ? "is-active" : ""}`}
-          to="/"
+          to={homePath}
         >
           Home
         </Link>
@@ -50,7 +56,7 @@ export default function HeaderNav({
           className={`header-nav-item header-nav-item-with-badge ${
             isBookingsActive ? "is-active" : ""
           }`}
-          to="/admin/bookings"
+          to={`${basePath}/admin/bookings`}
         >
           Bookings
           {activeBookingsCount > 0 && (
@@ -78,7 +84,7 @@ export default function HeaderNav({
           <div className="header-nav-more-menu" role="menu">
             <Link
               className="header-nav-more-item"
-              to="/table-view"
+              to={`${basePath}/table-view`}
               onClick={closeMore}
               role="menuitem"
             >
@@ -86,15 +92,15 @@ export default function HeaderNav({
             </Link>
             <Link
               className="header-nav-more-item"
-              to="/admin/menu"
+              to={`${basePath}/admin/menu`}
               onClick={closeMore}
               role="menuitem"
             >
               Manage Bar
-            </Link> 
+            </Link>
             <Link
               className="header-nav-more-item"
-              to="/admin/sales"
+              to={`${basePath}/admin/sales`}
               onClick={closeMore}
               role="menuitem"
             >

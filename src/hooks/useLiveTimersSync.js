@@ -44,7 +44,7 @@ function getNextRevision(previousRevision = 0) {
   return Math.max(Date.now(), Number(previousRevision || 0) + 1);
 }
 
-export default function useLiveTimersSync(tables, setTables) {
+export default function useLiveTimersSync(tables, setTables, branch) {
   const isApplyingRemoteSyncRef = useRef(false);
   const hasBootstrappedRemoteRef = useRef(false);
   const latestTablesRef = useRef(tables);
@@ -63,7 +63,7 @@ export default function useLiveTimersSync(tables, setTables) {
 
     const bootstrapLiveTimers = async () => {
       try {
-        const remoteTables = await fetchLiveTimers();
+        const remoteTables = await fetchLiveTimers(branch);
         if (isCancelled) return;
         didLoadRemoteSnapshot = true;
 
@@ -102,7 +102,7 @@ export default function useLiveTimersSync(tables, setTables) {
             return acc;
           }, {});
           lastSentTablesRef.current = latestTablesRef.current;
-          await upsertLiveTimers(latestTablesRef.current, revision);
+          await upsertLiveTimers(latestTablesRef.current, revision, branch);
         }
       } catch (error) {
         console.error("Failed to bootstrap live timers:", error);
@@ -120,7 +120,7 @@ export default function useLiveTimersSync(tables, setTables) {
             return acc;
           }, {});
           lastSentTablesRef.current = latestTablesRef.current;
-          upsertLiveTimers(latestTablesRef.current, revision).catch((error) => {
+          upsertLiveTimers(latestTablesRef.current, revision, branch).catch((error) => {
             console.error("Failed to flush pending live timer sync:", error);
           });
         } else if (didLoadRemoteSnapshot && !shouldSeedFromLocal) {
@@ -153,13 +153,13 @@ export default function useLiveTimersSync(tables, setTables) {
           return areTablesEquivalentForSync(table, merged) ? table : merged;
         })
       );
-    });
+    }, branch);
 
     return () => {
       isCancelled = true;
       unsubscribe();
     };
-  }, [setTables]);
+  }, [setTables, branch]);
 
   useEffect(() => {
     if (!hasBootstrappedRemoteRef.current) {
@@ -198,9 +198,9 @@ export default function useLiveTimersSync(tables, setTables) {
     );
 
     lastSentTablesRef.current = tables;
-    upsertLiveTimers(changedTables, revision).catch((error) => {
+    upsertLiveTimers(changedTables, revision, branch).catch((error) => {
       console.error("Failed to sync live timers:", error);
     });
-  }, [tables]);
+  }, [tables, branch]);
 }
 

@@ -1,9 +1,11 @@
 import { supabase, isSupabaseConfigured } from "../supabaseClient";
+import { getActiveBranch } from "../../branches";
 
 let hasWarnedMissingGuardedRpc = false;
 
-function toLiveTimerRow(table) {
+function toLiveTimerRow(table, branch) {
   return {
+    branch,
     table_id: table.id,
     name: table.name,
     is_available: Boolean(table.isAvailable),
@@ -45,23 +47,28 @@ function fromLiveTimerRow(row) {
   };
 }
 
-export async function fetchLiveTimers() {
+export async function fetchLiveTimers(branch = getActiveBranch()) {
   if (!isSupabaseConfigured || !supabase) return [];
   const { data, error } = await supabase
     .from("live_timers")
     .select(
       "table_id, name, is_available, timer_start_time, elapsed_time_in_seconds, is_running, timer_mode, initial_countdown_seconds, session_start_time, session_end_time, fit_pass, game_type, hourly_rate, sync_revision"
     )
+    .eq("branch", branch)
     .order("table_id", { ascending: true });
 
   if (error) throw error;
   return (data || []).map(fromLiveTimerRow);
 }
 
-export async function upsertLiveTimers(tables, syncRevision = Date.now()) {
+export async function upsertLiveTimers(
+  tables,
+  syncRevision = Date.now(),
+  branch = getActiveBranch()
+) {
   if (!isSupabaseConfigured || !supabase) return;
   const rows = (tables || []).map((table) =>
-    toLiveTimerRow({ ...table, syncRevision })
+    toLiveTimerRow({ ...table, syncRevision }, branch)
   );
   if (!rows.length) return;
   const { error: rpcError } = await supabase.rpc("upsert_live_timers_guarded", {
@@ -82,7 +89,7 @@ export async function upsertLiveTimers(tables, syncRevision = Date.now()) {
     }
     const { error } = await supabase
       .from("live_timers")
-      .upsert(rows, { onConflict: "table_id" });
+      .upsert(rows, { onConflict: "branch,table_id" });
     if (error) throw error;
     return;
   }
@@ -90,14 +97,19 @@ export async function upsertLiveTimers(tables, syncRevision = Date.now()) {
   throw rpcError;
 }
 
-export function subscribeToLiveTimerChanges(onRow) {
+export function subscribeToLiveTimerChanges(onRow, branch = getActiveBranch()) {
   if (!isSupabaseConfigured || !supabase) return () => {};
 
   const channel = supabase
-    .channel("live-timers-sync")
+    .channel(`live-timers-sync-${branch}`)
     .on(
       "postgres_changes",
-      { event: "*", schema: "public", table: "live_timers" },
+      {
+        event: "*",
+        schema: "public",
+        table: "live_timers",
+        filter: `branch=eq.${branch}`,
+      },
       (payload) => {
         const next = payload.new || payload.old;
         if (!next) return;
@@ -110,4 +122,3 @@ export function subscribeToLiveTimerChanges(onRow) {
     supabase.removeChannel(channel);
   };
 }
-

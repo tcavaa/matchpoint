@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from "../supabaseClient";
 import { assertSupabase } from "./assertSupabase";
+import { getActiveBranch } from "../../branches";
 
 const FULL_COLUMNS =
   "id, customer_name, tables_count, hours_count, table_ids, booking_at, is_done, done_at, created_at";
@@ -51,12 +52,13 @@ function warnMissingTableIdsOnce() {
   );
 }
 
-export async function fetchBookings() {
+export async function fetchBookings(branch = getActiveBranch()) {
   assertSupabase();
 
   const primary = await supabase
     .from("bookings")
     .select(FULL_COLUMNS)
+    .eq("branch", branch)
     .or("is_done.is.false,is_done.is.null")
     .order("created_at", { ascending: false });
 
@@ -67,6 +69,7 @@ export async function fetchBookings() {
     const noTableIds = await supabase
       .from("bookings")
       .select(LEGACY_COLUMNS_NO_TABLE_IDS)
+      .eq("branch", branch)
       .or("is_done.is.false,is_done.is.null")
       .order("created_at", { ascending: false });
     if (!noTableIds.error) return (noTableIds.data || []).map(normalizeBooking);
@@ -87,6 +90,7 @@ export async function createBooking({
   hoursCount,
   bookingAt,
   tableIds,
+  branch = getActiveBranch(),
 }) {
   assertSupabase();
 
@@ -112,6 +116,7 @@ export async function createBooking({
     hours_count: finalHoursCount,
     booking_at: bookingAt || null,
     table_ids: cleanedTableIds,
+    branch,
   };
 
   const primary = await supabase
@@ -132,6 +137,7 @@ export async function createBooking({
       tables_count: computedTablesCount,
       hours_count: finalHoursCount,
       booking_at: bookingAt || null,
+      branch,
     };
     const legacy = await supabase
       .from("bookings")
@@ -257,11 +263,12 @@ export async function deleteBooking(id) {
   emitBookingsChanged();
 }
 
-export async function fetchActiveBookingsCount() {
+export async function fetchActiveBookingsCount(branch = getActiveBranch()) {
   assertSupabase();
   const primary = await supabase
     .from("bookings")
     .select("id", { count: "exact", head: true })
+    .eq("branch", branch)
     .or("is_done.is.false,is_done.is.null");
 
   if (!primary.error) return primary.count || 0;
@@ -273,13 +280,18 @@ export async function fetchActiveBookingsCount() {
   return fallback.count || 0;
 }
 
-export function subscribeToBookingsChanges(onChange) {
+export function subscribeToBookingsChanges(onChange, branch = getActiveBranch()) {
   if (!isSupabaseConfigured || !supabase) return () => {};
   const channel = supabase
-    .channel("bookings-change-notifications")
+    .channel(`bookings-change-notifications-${branch}`)
     .on(
       "postgres_changes",
-      { event: "*", schema: "public", table: "bookings" },
+      {
+        event: "*",
+        schema: "public",
+        table: "bookings",
+        filter: `branch=eq.${branch}`,
+      },
       (payload) => {
         const { new: newRow, old: oldRow } = payload || {};
         const normalizedPayload = {
@@ -297,10 +309,10 @@ export function subscribeToBookingsChanges(onChange) {
   };
 }
 
-export function subscribeToBookingInserts(onInsert) {
+export function subscribeToBookingInserts(onInsert, branch = getActiveBranch()) {
   return subscribeToBookingsChanges((payload) => {
     if (payload.eventType === "INSERT" && payload?.new) {
       onInsert(payload.new);
     }
-  });
+  }, branch);
 }

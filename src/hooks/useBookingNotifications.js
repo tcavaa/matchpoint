@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { subscribeToBookingInserts } from "../services/supabaseData";
+import { getActiveBranch } from "../branches";
 
-export default function useBookingNotifications() {
+export default function useBookingNotifications(branch = getActiveBranch()) {
   const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
@@ -16,10 +17,10 @@ export default function useBookingNotifications() {
       setTimeout(() => {
         setNotifications((prev) => prev.filter((n) => n.id !== next.id));
       }, 6000);
-    });
+    }, branch);
 
     return () => unsubscribe();
-  }, []);
+  }, [branch]);
 
   const dismissNotification = (id) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));

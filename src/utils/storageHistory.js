@@ -1,6 +1,6 @@
 import { LOCAL_STORAGE_HISTORY_KEY } from "../config";
 
-export function buildHistoryFromStorage(storedHistory) {
+export function buildHistoryFromStorage(storedHistory, storageKey = LOCAL_STORAGE_HISTORY_KEY) {
   const parsedHistory = JSON.parse(storedHistory);
   const now = new Date();
   const today = now.toDateString();
@@ -15,7 +15,7 @@ export function buildHistoryFromStorage(storedHistory) {
   });
 
   if (filteredHistory.length !== parsedHistory.length) {
-    localStorage.setItem(LOCAL_STORAGE_HISTORY_KEY, JSON.stringify(filteredHistory));
+    localStorage.setItem(storageKey, JSON.stringify(filteredHistory));
     console.log("InitializeHistory: Old sessions removed from localStorage.");
   }
 

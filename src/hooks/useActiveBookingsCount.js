@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { fetchActiveBookingsCount, subscribeToBookingsChanges } from "../services/supabaseData";
+import { getActiveBranch } from "../branches";
 
-export default function useActiveBookingsCount() {
+export default function useActiveBookingsCount(branch = getActiveBranch()) {
   const [activeBookingsCount, setActiveBookingsCount] = useState(0);
 
   useEffect(() => {
@@ -9,7 +10,7 @@ export default function useActiveBookingsCount() {
 
     const refreshCount = async () => {
       try {
-        const count = await fetchActiveBookingsCount();
+        const count = await fetchActiveBookingsCount(branch);
         if (mounted) setActiveBookingsCount(count);
       } catch (error) {
         console.error("Failed to fetch active bookings count:", error);
@@ -19,7 +20,7 @@ export default function useActiveBookingsCount() {
     refreshCount();
     const unsubscribe = subscribeToBookingsChanges(() => {
       refreshCount();
-    });
+    }, branch);
     const onLocalBookingsChanged = () => {
       refreshCount();
     };
@@ -38,7 +39,7 @@ export default function useActiveBookingsCount() {
       window.removeEventListener("focus", onWindowFocus);
       window.clearInterval(intervalId);
     };
-  }, []);
+  }, [branch]);
 
   return activeBookingsCount;
 }

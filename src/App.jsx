@@ -1,6 +1,6 @@
 // src/App.jsx
 import React, { useState, useEffect, Suspense } from "react";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from "react-router-dom";
 import StartModal from "./components/StartModal";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import SalesSettingsPage from "./pages/SalesSettingsPage";
@@ -21,31 +21,46 @@ import "./App.css";
 import "./components/BookingNotifications.css";
 // App.jsx
 import { HOURLY_RATE, LOCAL_STORAGE_TABLES_KEY, LOCAL_STORAGE_HISTORY_KEY } from './config';
+import {
+  DEFAULT_BRANCH,
+  resolveBranchFromPath,
+  setActiveBranch,
+  branchPrefix,
+  branchStorageKey,
+  getBranchConfig,
+} from './branches';
 
-function App() {
+// ─── Per-branch app body ──────────────────────────────────────────────
+// Renders the whole manager for a single company branch. Remounted (via key)
+// whenever the branch changes, so all branch-scoped state reinitializes.
+function BranchApp({ branch }) {
+  const basePath = branchPrefix(branch); // "" for main, "/dedaena" otherwise
+  const homePath = basePath || "/";
+  const branchConfig = getBranchConfig(branch);
+
   const [_, setTick] = useState(0); // To force re-render for running timers
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { notifications, dismissNotification } = useBookingNotifications();
-  const activeBookingsCount = useActiveBookingsCount();
+  const { notifications, dismissNotification } = useBookingNotifications(branch);
+  const activeBookingsCount = useActiveBookingsCount(branch);
   const { cart, addToCart, incrementQuantity, decrementQuantity, removeItem, calculateTotal, handleSubmit } = useCart();
-  const { 
-    tables, 
-    setTables, 
-    sessionHistory, 
-    showModalForTableId,  
-    openStartModal, 
-    closeStartModal, 
-    handleToggleAvailability, 
-    handleStartTimer, 
-    handleStopTimer, 
-    handlePayAndClear, 
+  const {
+    tables,
+    setTables,
+    sessionHistory,
+    showModalForTableId,
+    openStartModal,
+    closeStartModal,
+    handleToggleAvailability,
+    handleStartTimer,
+    handleStopTimer,
+    handlePayAndClear,
     handleTransferTimer
-  } = useTables();
+  } = useTables(branch);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(prev => !prev);
   };
-  
+
   // Interval to update running timers and check for countdown completion
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -91,29 +106,21 @@ function App() {
     return () => clearInterval(intervalId);
   }, [setTables]);
 
-  // Save tables to local storage
+  // Save tables to local storage (branch-scoped key)
   useEffect(() => {
     try {
-      localStorage.setItem(LOCAL_STORAGE_TABLES_KEY, JSON.stringify(tables));
+      localStorage.setItem(branchStorageKey(LOCAL_STORAGE_TABLES_KEY, branch), JSON.stringify(tables));
     } catch (e) {
       console.error("Tables Effect: Error saving tables to localStorage:", e);
     }
-  }, [tables]);
+  }, [tables, branch]);
 
-  // Save history to local storage
+  // Save history to local storage (branch-scoped key)
   useEffect(() => {
-    console.log(
-      "SessionHistory Effect: Attempting to save history. Current state:",
-      sessionHistory
-    );
     try {
       localStorage.setItem(
-        LOCAL_STORAGE_HISTORY_KEY,
+        branchStorageKey(LOCAL_STORAGE_HISTORY_KEY, branch),
         JSON.stringify(sessionHistory)
-      );
-      console.log(
-        "SessionHistory Effect: Successfully saved to localStorage. Key:",
-        LOCAL_STORAGE_HISTORY_KEY
       );
     } catch (e) {
       console.error(
@@ -121,79 +128,95 @@ function App() {
         e
       );
     }
-  }, [sessionHistory]);
+  }, [sessionHistory, branch]);
 
   const tableForModal = tables.find((t) => t.id === showModalForTableId);
 
   return (
+    <div className="app">
+      <header className="app-header">
+        <Link className="logo" to={homePath}>
+          <h1>
+            <img src="/matchpoint-logo.png" alt="MatchPoint logo" className="header-logo-image" />
+            MatchPoint Table Manager
+            {branch !== DEFAULT_BRANCH && <span className="branch-tag"> · {branchConfig.label}</span>}
+          </h1>
+        </Link>
+        <HeaderNav
+          basePath={basePath}
+          activeBookingsCount={activeBookingsCount}
+          isSidebarOpen={isSidebarOpen}
+          onToggleSidebar={toggleSidebar}
+        />
+      </header>
+      <main className="main-content">
+        <BookingNotifications notifications={notifications} onDismiss={dismissNotification} />
+        <GlobalSoundButtons />
+        <Routes>
+          <Route
+            path={homePath}
+            element={
+              <HomeDashboard
+                tables={tables}
+                openStartModal={openStartModal}
+                handleStopTimer={handleStopTimer}
+                handlePayAndClear={handlePayAndClear}
+                handleToggleAvailability={handleToggleAvailability}
+                handleTransferTimer={handleTransferTimer}
+                isSidebarOpen={isSidebarOpen}
+                cart={cart}
+                incrementQuantity={incrementQuantity}
+                decrementQuantity={decrementQuantity}
+                removeItem={removeItem}
+                calculateTotal={calculateTotal}
+                handleSubmit={handleSubmit}
+                addToCart={addToCart}
+                toggleSidebar={toggleSidebar}
+                sessionHistory={sessionHistory}
+              />
+            }
+          />
+          <Route
+            path={`${basePath}/analytics`}
+            element={
+              <Suspense fallback={<div>Loading Analytics..</div>}>
+                <AnalyticsPage />
+              </Suspense>
+            }
+          />
+          <Route path={`${basePath}/admin/sales`} element={<SalesSettingsPage />} />
+          <Route path={`${basePath}/admin/menu`} element={<MenuAdminPage />} />
+          <Route path={`${basePath}/admin/bookings`} element={<BookingsPage />} />
+          <Route path={`${basePath}/table-view`} element={<TableViewPage tables={tables} />} />
+        </Routes>
+      </main>
+      {tableForModal && (
+        <StartModal
+          table={tableForModal}
+          isOpen={!!showModalForTableId}
+          onClose={closeStartModal}
+          onStart={handleStartTimer}
+        />
+      )}
+      <footer className="app-footer">
+        <p>Hourly Rate: {HOURLY_RATE} GEL</p>
+      </footer>
+    </div>
+  );
+}
+
+// ─── Shell: resolves the active branch from the URL ───────────────────
+function AppShell() {
+  const location = useLocation();
+  const branch = resolveBranchFromPath(location.pathname);
+  setActiveBranch(branch);
+  return <BranchApp key={branch} branch={branch} />;
+}
+
+function App() {
+  return (
     <Router>
-      <div className="app">
-        <header className="app-header">
-          <Link className="logo" to=''>
-            <h1>
-              <img src="/matchpoint-logo.png" alt="MatchPoint logo" className="header-logo-image" />
-              MatchPoint Table Manager
-            </h1>
-          </Link>
-          <HeaderNav
-            activeBookingsCount={activeBookingsCount}
-            isSidebarOpen={isSidebarOpen}
-            onToggleSidebar={toggleSidebar}
-          />
-        </header>
-        <main className="main-content">
-          <BookingNotifications notifications={notifications} onDismiss={dismissNotification} />
-          <GlobalSoundButtons />
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <HomeDashboard
-                  tables={tables}
-                  openStartModal={openStartModal}
-                  handleStopTimer={handleStopTimer}
-                  handlePayAndClear={handlePayAndClear}
-                  handleToggleAvailability={handleToggleAvailability}
-                  handleTransferTimer={handleTransferTimer}
-                  isSidebarOpen={isSidebarOpen}
-                  cart={cart}
-                  incrementQuantity={incrementQuantity}
-                  decrementQuantity={decrementQuantity}
-                  removeItem={removeItem}
-                  calculateTotal={calculateTotal}
-                  handleSubmit={handleSubmit}
-                  addToCart={addToCart}
-                  toggleSidebar={toggleSidebar}
-                  sessionHistory={sessionHistory}
-                />
-              }
-            />
-            <Route
-              path="/analytics"
-              element={
-                <Suspense fallback={<div>Loading Analytics..</div>}>
-                  <AnalyticsPage />
-                </Suspense>
-              }
-            />
-            <Route path="/admin/sales" element={<SalesSettingsPage />} />
-            <Route path="/admin/menu" element={<MenuAdminPage />} />
-            <Route path="/admin/bookings" element={<BookingsPage />} />
-            <Route path="/table-view" element={<TableViewPage tables={tables} />} />
-          </Routes>
-        </main>
-        {tableForModal && (
-          <StartModal
-            table={tableForModal}
-            isOpen={!!showModalForTableId}
-            onClose={closeStartModal}
-            onStart={handleStartTimer}
-          />
-        )}
-        <footer className="app-footer">
-          <p>Hourly Rate: {HOURLY_RATE} GEL</p>
-        </footer>
-      </div>
+      <AppShell />
     </Router>
   );
 }
