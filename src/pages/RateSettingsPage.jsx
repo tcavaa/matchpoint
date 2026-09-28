@@ -171,7 +171,8 @@ function RateSettingsPage({ rateSettings, onSave, tables, branchConfig }) {
       setStatus({
         type: "warning",
         message:
-          "Saved on this device, but other devices were not updated. Check the connection and that the rate_settings table from supabase/schema.sql exists.",
+          "Saved on this device, but other devices were not updated. Check the connection and that " +
+          `supabase/schema_rate_settings.sql has been run in Supabase (${saveError?.message || "unknown error"}).`,
       });
     } finally {
       setIsDirty(false);
