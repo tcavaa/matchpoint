@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import "./StartModal.css";
 import StartModalContentFields from "./start-modal/StartModalContentFields";
 
-const StartModal = ({ table, isOpen, onClose, onStart }) => {
+const StartModal = ({ table, rateSettings, isOpen, onClose, onStart }) => {
   const isFoosOrHockey = table?.gameType === 'foosball' || table?.gameType === 'airhockey';
   const isPlayStation = table?.gameType === "playstation";
   const isCustomTimer = table?.gameType === "custom";
@@ -52,8 +52,6 @@ const StartModal = ({ table, isOpen, onClose, onStart }) => {
           customName: customName.trim(),
           customHourlyRate: parseFloat(customHourlyRate),
         }
-      : isPlayStation
-      ? { customHourlyRate: 20 }
       : {};
 
     onStart(
@@ -75,6 +73,7 @@ const StartModal = ({ table, isOpen, onClose, onStart }) => {
         <h4>Start Timer for {table.name}</h4>
         <StartModalContentFields
           table={table}
+          rateSettings={rateSettings}
           mode={mode}
           setMode={setMode}
           durationMinutes={durationMinutes}

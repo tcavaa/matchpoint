@@ -15,6 +15,11 @@ export {
   subscribeToLiveTimerChanges,
 } from "./supabase/liveTimersApi";
 export {
+  fetchRateSettings,
+  saveRateSettingsRecord,
+  subscribeToRateSettingsChanges,
+} from "./supabase/rateSettingsApi";
+export {
   fetchBookings,
   createBooking,
   updateBooking,

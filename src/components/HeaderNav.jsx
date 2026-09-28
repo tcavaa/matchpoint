@@ -15,7 +15,7 @@ export default function HeaderNav({
   const otherPaths = [
     `${basePath}/admin/menu`,
     `${basePath}/table-view`,
-    `${basePath}/admin/sales`,
+    `${basePath}/admin/rates`,
   ];
 
   useEffect(() => {
@@ -100,11 +100,11 @@ export default function HeaderNav({
             </Link>
             <Link
               className="header-nav-more-item"
-              to={`${basePath}/admin/sales`}
+              to={`${basePath}/admin/rates`}
               onClick={closeMore}
               role="menuitem"
             >
-              Sale Settings
+              Rate Settings
             </Link>
           </div>
         </div>

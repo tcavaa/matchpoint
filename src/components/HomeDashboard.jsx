@@ -7,6 +7,7 @@ import CocktailRecipes from "./CocktailRecipes";
 
 export default function HomeDashboard({
   tables,
+  rateSettings,
   openStartModal,
   handleStopTimer,
   handlePayAndClear,
@@ -30,6 +31,7 @@ export default function HomeDashboard({
           <TableCard
             key={table.id}
             table={table}
+            rateSettings={rateSettings}
             onOpenStartModal={openStartModal}
             onStop={handleStopTimer}
             onPayAndClear={handlePayAndClear}

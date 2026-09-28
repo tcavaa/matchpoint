@@ -1,9 +1,9 @@
 // src/App.jsx
 import React, { useState, useEffect, Suspense } from "react";
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from "react-router-dom";
 import StartModal from "./components/StartModal";
 import AnalyticsPage from "./pages/AnalyticsPage";
-import SalesSettingsPage from "./pages/SalesSettingsPage";
+import RateSettingsPage from "./pages/RateSettingsPage";
 import MenuAdminPage from "./pages/MenuAdminPage";
 import BookingsPage from "./pages/BookingsPage";
 import TableViewPage from "./pages/TableViewPage";
@@ -14,13 +14,14 @@ import BookingNotifications from "./components/BookingNotifications";
 import HeaderNav from "./components/HeaderNav";
 import useCart from "./hooks/useCart";
 import useTables from "./hooks/useTables";
+import useRateSettings from "./hooks/useRateSettings";
 import useBookingNotifications from "./hooks/useBookingNotifications";
 import useActiveBookingsCount from "./hooks/useActiveBookingsCount";
 import { playTableEndSound } from "./utils/utils";
 import "./App.css";
 import "./components/BookingNotifications.css";
 // App.jsx
-import { HOURLY_RATE, LOCAL_STORAGE_TABLES_KEY, LOCAL_STORAGE_HISTORY_KEY } from './config';
+import { LOCAL_STORAGE_TABLES_KEY, LOCAL_STORAGE_HISTORY_KEY } from './config';
 import {
   DEFAULT_BRANCH,
   resolveBranchFromPath,
@@ -43,6 +44,7 @@ function BranchApp({ branch }) {
   const { notifications, dismissNotification } = useBookingNotifications(branch);
   const activeBookingsCount = useActiveBookingsCount(branch);
   const { cart, addToCart, incrementQuantity, decrementQuantity, removeItem, calculateTotal, handleSubmit } = useCart();
+  const { rateSettings, saveRateSettings } = useRateSettings(branch);
   const {
     tables,
     setTables,
@@ -55,7 +57,7 @@ function BranchApp({ branch }) {
     handleStopTimer,
     handlePayAndClear,
     handleTransferTimer
-  } = useTables(branch);
+  } = useTables(branch, rateSettings);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(prev => !prev);
@@ -158,6 +160,7 @@ function BranchApp({ branch }) {
             element={
               <HomeDashboard
                 tables={tables}
+                rateSettings={rateSettings}
                 openStartModal={openStartModal}
                 handleStopTimer={handleStopTimer}
                 handlePayAndClear={handlePayAndClear}
@@ -184,7 +187,21 @@ function BranchApp({ branch }) {
               </Suspense>
             }
           />
-          <Route path={`${basePath}/admin/sales`} element={<SalesSettingsPage />} />
+          <Route
+            path={`${basePath}/admin/rates`}
+            element={
+              <RateSettingsPage
+                rateSettings={rateSettings}
+                onSave={saveRateSettings}
+                tables={tables}
+                branchConfig={branchConfig}
+              />
+            }
+          />
+          <Route
+            path={`${basePath}/admin/sales`}
+            element={<Navigate to={`${basePath}/admin/rates`} replace />}
+          />
           <Route path={`${basePath}/admin/menu`} element={<MenuAdminPage />} />
           <Route path={`${basePath}/admin/bookings`} element={<BookingsPage />} />
           <Route path={`${basePath}/table-view`} element={<TableViewPage tables={tables} />} />
@@ -193,13 +210,14 @@ function BranchApp({ branch }) {
       {tableForModal && (
         <StartModal
           table={tableForModal}
+          rateSettings={rateSettings}
           isOpen={!!showModalForTableId}
           onClose={closeStartModal}
           onStart={handleStartTimer}
         />
       )}
       <footer className="app-footer">
-        <p>Hourly Rate: {HOURLY_RATE} GEL</p>
+        <p>Hourly Rate: {rateSettings.pingPongHourlyRate} GEL</p>
       </footer>
     </div>
   );
