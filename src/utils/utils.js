@@ -22,7 +22,7 @@ export const formatTime = (totalSecondsInput) => {
 /**
  * Calculate segmented price across sale window.
  * Sale window: fromHour (inclusive) toHour (exclusive) in 24h (0-24).
- * Example: 12-15 at 12 GEL/hr; otherwise HOURLY_RATE.
+ * Example: 12-15 at 12 GEL/hr; otherwise the regular hourly rate.
  * If session crosses boundaries, split time accordingly.
  */
 export const calculateSegmentedPrice = ({

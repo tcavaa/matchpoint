@@ -3,11 +3,10 @@ import React from "react";
 import { formatTime, playTableEndSound } from "../utils/utils";
 import "./TableCard.css"; // Ensure this CSS is updated or styles are fine
 import SwitchToggle from "./SwitchToggle";
-import { HOURLY_RATE, LOCAL_STORAGE_SALES_SETTINGS_KEY } from "../config";
-import { getTableCardViewModel, loadSalesSettings } from "../utils/tableCardView";
+import { getTableCardViewModel } from "../utils/tableCardView";
 import TableCardUnavailable from "./table-card/TableCardUnavailable";
 
-const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggleAvailability, onTransferTimer }) => {
+const TableCard = ({ table, rateSettings, onOpenStartModal, onStop, onPayAndClear, handleToggleAvailability, onTransferTimer }) => {
   const {
     name,
     isAvailable,
@@ -17,15 +16,13 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
     initialCountdownSeconds,
     gameType,
   } = table;
-  const sales = loadSalesSettings(LOCAL_STORAGE_SALES_SETTINGS_KEY);
   const {
     displayTimeSeconds,
-    currentCost,
-    sessionCost,
+    cost,
     canStart,
     canPayAndClear,
     isCountdownEnded,
-  } = getTableCardViewModel(table, HOURLY_RATE, sales);
+  } = getTableCardViewModel(table, rateSettings);
 
   if (!isAvailable) {
     return (
@@ -90,8 +87,8 @@ const TableCard = ({ table, onOpenStartModal, onStop, onPayAndClear, handleToggl
       )}
       <div className="cost-display">
         {timerMode === "countdown" && initialCountdownSeconds > 0
-          ? `Session Cost: ${sessionCost} GEL`
-          : `Current Cost: ${currentCost} GEL`}
+          ? `Session Cost: ${cost} GEL`
+          : `Current Cost: ${cost} GEL`}
       </div>
       <div className="controls">
         <button

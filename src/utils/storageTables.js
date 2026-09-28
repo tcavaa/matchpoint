@@ -9,7 +9,7 @@ const CUSTOM_ID = 14;
 const SPECIAL_DEFAULTS = {
   [FOOSBALL_ID]: { name: "Foosball", gameType: "foosball", hourlyRate: null },
   [AIR_HOCKEY_ID]: { name: "Air hockey", gameType: "airhockey", hourlyRate: null },
-  [PLAYSTATION_ID]: { name: "PlayStation", gameType: "playstation", hourlyRate: 20 },
+  [PLAYSTATION_ID]: { name: "PlayStation", gameType: "playstation", hourlyRate: null },
   [CUSTOM_ID]: { name: "Blank Timer", gameType: "custom", hourlyRate: null },
 };
 
@@ -28,6 +28,7 @@ function getDefaultTableById(id, pingPongOnly = false) {
     sessionStartTime: null,
     sessionEndTime: null,
     fitPass: false,
+    extraEquipment: false,
     gameType: special.gameType,
     hourlyRate: special.hourlyRate ?? null,
   };
@@ -86,6 +87,8 @@ function normalizeStoredTables(parsedTables) {
     sessionEndTime:
       typeof table.sessionEndTime === "number" ? table.sessionEndTime : null,
     fitPass: typeof table.fitPass === "boolean" ? table.fitPass : false,
+    extraEquipment:
+      typeof table.extraEquipment === "boolean" ? table.extraEquipment : false,
     gameType: table.gameType || "pingpong",
     hourlyRate: typeof table.hourlyRate === "number" ? table.hourlyRate : null,
   }));

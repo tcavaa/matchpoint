@@ -10,10 +10,9 @@ import {
   getClearedTableState,
   getFinalElapsedTimeInSeconds,
 } from "../utils/tableBilling";
-import { HOURLY_RATE, LOCAL_STORAGE_SALES_SETTINGS_KEY } from '../config';
 import { getActiveBranch } from "../branches";
 
-export default function useTables(branch = getActiveBranch()) {
+export default function useTables(branch = getActiveBranch(), rateSettings) {
     const [tables, setTables] = useState(() => initializeTables(branch));
     const [sessionHistory, setSessionHistory] = useState(() => initializeHistory(branch));
     const [showModalForTableId, setShowModalForTableId] = useState(null);
@@ -128,8 +127,7 @@ export default function useTables(branch = getActiveBranch()) {
         calculateBillingSummary({
           table: tableToClear,
           finalElapsedTimeInSeconds,
-          hourlyRate: HOURLY_RATE,
-          salesSettingsStorageKey: LOCAL_STORAGE_SALES_SETTINGS_KEY,
+          rateSettings,
         });
 
       const newSessionDetails = {
@@ -177,6 +175,7 @@ export default function useTables(branch = getActiveBranch()) {
     },
     [
       tables,
+      rateSettings,
       setTables,
       setSessionHistory,
       branch,
@@ -215,6 +214,7 @@ export default function useTables(branch = getActiveBranch()) {
               sessionStartTime: null,
               sessionEndTime: null,
               fitPass: false,
+              extraEquipment: false,
               hourlyRate: table.hourlyRate ?? null,
           };
         }
@@ -248,6 +248,7 @@ export default function useTables(branch = getActiveBranch()) {
               sessionStartTime: fromTable.sessionStartTime ?? Date.now(),
               sessionEndTime: null,
               fitPass: !!fromTable.fitPass,
+              extraEquipment: !!fromTable.extraEquipment,
               hourlyRate: fromTable.hourlyRate ?? table.hourlyRate ?? null,
             };
           }
@@ -262,6 +263,7 @@ export default function useTables(branch = getActiveBranch()) {
             sessionStartTime: fromTable.sessionStartTime ?? Date.now(),
             sessionEndTime: null,
             fitPass: !!fromTable.fitPass,
+            extraEquipment: !!fromTable.extraEquipment,
             hourlyRate: fromTable.hourlyRate ?? table.hourlyRate ?? null,
           };
         }

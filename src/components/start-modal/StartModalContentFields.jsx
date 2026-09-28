@@ -1,7 +1,9 @@
 import React from "react";
+import { formatHour, formatRate, getPingPongRates } from "../../utils/rateSettings";
 
 export default function StartModalContentFields({
   table,
+  rateSettings,
   mode,
   setMode,
   durationMinutes,
@@ -20,6 +22,18 @@ export default function StartModalContentFields({
   setExtraEquipment,
   validationError,
 }) {
+  const equipmentBonus = extraEquipment ? rateSettings.extraEquipmentHourlyRate : 0;
+  const pingPongRates = getPingPongRates(table.id, rateSettings);
+  const saleHours = `${formatHour(rateSettings.saleFromHour)}–${formatHour(rateSettings.saleToHour)}`;
+  const pingPongPricing = fitPass
+    ? `FitPass, ${formatRate(rateSettings.fitPassPer30Min)} GEL per 30 minutes`
+    : `${formatRate(pingPongRates.hourlyRate + equipmentBonus)} GEL per hour ` +
+      `(${saleHours}: ${formatRate(pingPongRates.saleHourlyRate + equipmentBonus)} GEL per hour)`;
+  const foosOrHockeyRate =
+    table.gameType === "foosball"
+      ? rateSettings.foosballHourlyRate
+      : rateSettings.airHockeyHourlyRate;
+
   return (
     <>
       <div className="mode-selection">
@@ -60,7 +74,7 @@ export default function StartModalContentFields({
       {isPlayStation && (
         <>
           <div className="duration-input" style={{ marginTop: 8, opacity: 0.9 }}>
-            Pricing: {extraEquipment ? 25 : 20} GEL per hour
+            Pricing: {formatRate(rateSettings.playstationHourlyRate + equipmentBonus)} GEL per hour
           </div>
           <div style={{ marginTop: 12 }}>
             <label>
@@ -69,22 +83,27 @@ export default function StartModalContentFields({
                 checked={extraEquipment}
                 onChange={(e) => setExtraEquipment(e.target.checked)}
               />
-              &nbsp;+2 Controllers (+5 GEL/hour)
+              &nbsp;+2 Controllers (+{formatRate(rateSettings.extraEquipmentHourlyRate)} GEL/hour)
             </label>
           </div>
         </>
       )}
       {isPingPong && (
-        <div style={{ marginTop: 12 }}>
-          <label>
-            <input
-              type="checkbox"
-              checked={extraEquipment}
-              onChange={(e) => setExtraEquipment(e.target.checked)}
-            />
-            &nbsp;+2 Rackets (+5 GEL/hour)
-          </label>
-        </div>
+        <>
+          <div className="duration-input" style={{ marginTop: 8, opacity: 0.9 }}>
+            Pricing: {pingPongPricing}
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <label>
+              <input
+                type="checkbox"
+                checked={extraEquipment}
+                onChange={(e) => setExtraEquipment(e.target.checked)}
+              />
+              &nbsp;+2 Rackets (+{formatRate(rateSettings.extraEquipmentHourlyRate)} GEL/hour)
+            </label>
+          </div>
+        </>
       )}
       {isCustomTimer && (
         <>
@@ -114,7 +133,7 @@ export default function StartModalContentFields({
       )}
       {isFoosOrHockey && (
         <div className="duration-input" style={{ marginTop: 8, opacity: 0.8 }}>
-          Pricing: 12 GEL per hour
+          Pricing: {formatRate(foosOrHockeyRate)} GEL per hour
         </div>
       )}
 
@@ -126,7 +145,7 @@ export default function StartModalContentFields({
               checked={fitPass}
               onChange={(e) => setFitPass(e.target.checked)}
             />
-            &nbsp;FitPass (30 minutes = 6 GEL)
+            &nbsp;FitPass (30 minutes = {formatRate(rateSettings.fitPassPer30Min)} GEL)
           </label>
         </div>
       )}
